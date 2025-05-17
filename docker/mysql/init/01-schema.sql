@@ -1,0 +1,110 @@
+-- MySQL初期化スクリプト
+-- データベース作成（docker-compose.ymlで行っているので省略可能）
+-- CREATE DATABASE IF NOT EXISTS minerdb;
+-- USE minerdb;
+
+-- ユーザーテーブル
+CREATE TABLE IF NOT EXISTS users (
+    id VARCHAR(36) PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    salt VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 町マスタテーブル
+CREATE TABLE IF NOT EXISTS towns (
+    id VARCHAR(36) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 拠点テーブル
+CREATE TABLE IF NOT EXISTS bases (
+    id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36) NOT NULL,
+    town_id VARCHAR(36) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (town_id) REFERENCES towns(id)
+);
+
+-- 倉庫テーブル
+CREATE TABLE IF NOT EXISTS warehouses (
+    id VARCHAR(36) PRIMARY KEY,
+    base_id VARCHAR(36) NOT NULL,
+    level INT NOT NULL DEFAULT 1,
+    capacity INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (base_id) REFERENCES bases(id)
+);
+
+-- 鉱石マスタテーブル
+CREATE TABLE IF NOT EXISTS ores (
+    id VARCHAR(36) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    rarity INT NOT NULL,
+    purity FLOAT NOT NULL,
+    processing_difficulty INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- アイテムマスタテーブル
+CREATE TABLE IF NOT EXISTS items (
+    id VARCHAR(36) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    rarity INT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 倉庫保管物テーブル
+CREATE TABLE IF NOT EXISTS warehouse_items (
+    id VARCHAR(36) PRIMARY KEY,
+    warehouse_id VARCHAR(36) NOT NULL,
+    item_id VARCHAR(36) NOT NULL,
+    quantity INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (warehouse_id) REFERENCES warehouses(id),
+    FOREIGN KEY (item_id) REFERENCES items(id)
+);
+
+-- 労働者テーブル
+CREATE TABLE IF NOT EXISTS workers (
+    id VARCHAR(36) PRIMARY KEY,
+    base_id VARCHAR(36) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    level INT NOT NULL DEFAULT 1,
+    strength INT NOT NULL,
+    stamina INT NOT NULL,
+    agility INT NOT NULL,
+    intelligence INT NOT NULL,
+    luck INT NOT NULL,
+    status ENUM('active', 'resting', 'injured') NOT NULL DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (base_id) REFERENCES bases(id)
+);
+
+-- 郵便テーブル
+CREATE TABLE IF NOT EXISTS mails (
+    id VARCHAR(36) PRIMARY KEY,
+    sender_id VARCHAR(36) NOT NULL,
+    receiver_id VARCHAR(36) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    content TEXT,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE,
+    is_draft BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_id) REFERENCES users(id),
+    FOREIGN KEY (receiver_id) REFERENCES users(id)
+);

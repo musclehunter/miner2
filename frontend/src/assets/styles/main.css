@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* カスタムユーティリティクラス */
+@layer components {
+  .btn {
+    @apply px-6 py-2.5 rounded-lg font-medium transition-all duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary-dark focus:ring-primary;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-white hover:bg-secondary-dark focus:ring-secondary;
+  }
+  
+  .btn-outline {
+    @apply border-2 border-light bg-transparent text-light hover:bg-light/10 focus:ring-light;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-2.5 bg-dark-lighter rounded-lg border border-dark-light focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary text-light;
+  }
+  
+  .card {
+    @apply bg-dark-lighter rounded-xl shadow-lg p-6;
+  }
+  
+  .title-text {
+    @apply text-4xl md:text-6xl font-bold text-center text-light;
+  }
+  
+  .subtitle-text {
+    @apply text-xl md:text-2xl text-center text-light-dark;
+  }
+}

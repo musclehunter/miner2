@@ -1,0 +1,77 @@
+version: '3'
+
+services:
+  # バックエンド (Go/Gin)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend:/app
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=miner
+      - DB_PASSWORD=minerpassword
+      - DB_NAME=minerdb
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - db
+      - redis
+    networks:
+      - miner-network
+
+  # フロントエンド (Vue.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - VUE_APP_API_URL=http://localhost:8080/api
+    depends_on:
+      - backend
+    networks:
+      - miner-network
+
+  # データベース (MySQL)
+  db:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=minerdb
+      - MYSQL_USER=miner
+      - MYSQL_PASSWORD=minerpassword
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    networks:
+      - miner-network
+
+  # キャッシュ (Redis)
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - miner-network
+
+volumes:
+  mysql-data:
+  redis-data:
+
+networks:
+  miner-network:
+    driver: bridge

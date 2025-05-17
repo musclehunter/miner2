@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <circle cx="50" cy="50" r="50" fill="#1E293B"/>
+  
+  <!-- 湖 -->
+  <path d="M20 60C20 45 35 40 50 40C65 40 80 45 80 60C80 70 65 75 50 75C35 75 20 70 20 60Z" fill="#334155"/>
+  
+  <!-- 銀のシンボル -->
+  <circle cx="50" cy="50" r="15" fill="#D1D5DB" opacity="0.7"/>
+  
+  <!-- 波紋 -->
+  <path d="M35 57C40 55 45 54 50 54C55 54 60 55 65 57" stroke="#F3F4F6" stroke-width="2" stroke-linecap="round"/>
+  <path d="M30 62C38 59 45 58 50 58C55 58 62 59 70 62" stroke="#F3F4F6" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- 町のシルエット -->
+  <path d="M25 45H35V35H25V45ZM65 45H75V35H65V45Z" fill="#D1D5DB"/>
+</svg>

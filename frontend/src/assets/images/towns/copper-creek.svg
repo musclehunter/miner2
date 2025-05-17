@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <circle cx="50" cy="50" r="50" fill="#1E293B"/>
+  
+  <!-- 地形 -->
+  <path d="M10 60H90V80H10V60Z" fill="#334155"/>
+  
+  <!-- 川 -->
+  <path d="M10 50C30 55 40 60 50 55C60 50 70 55 90 50V60H10V50Z" fill="#0EA5E9" opacity="0.6"/>
+  
+  <!-- 川の波模様 -->
+  <path d="M15 53C20 55 25 56 30 55C35 54 40 55 45 56C50 57 55 56 60 54C65 52 70 53 75 54C80 55 85 54 90 52" stroke="#7DD3FC" stroke-width="1" stroke-linecap="round"/>
+  
+  <!-- 銅のシンボル -->
+  <circle cx="50" cy="40" r="10" fill="#10B981" opacity="0.7"/>
+  <circle cx="50" cy="40" r="5" fill="#34D399"/>
+  
+  <!-- 町のシルエット -->
+  <path d="M30 60H40V50H30V60ZM45 60H55V45H45V60ZM60 60H70V50H60V60Z" fill="#10B981"/>
+</svg>

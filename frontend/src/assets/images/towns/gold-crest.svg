@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <circle cx="50" cy="50" r="50" fill="#1E293B"/>
+  
+  <!-- 山頂 -->
+  <path d="M20 70L40 30L60 50L80 20V70H20Z" fill="#334155"/>
+  
+  <!-- 金の輝き -->
+  <circle cx="50" cy="35" r="15" fill="#FBBF24" opacity="0.5"/>
+  <circle cx="50" cy="35" r="8" fill="#F59E0B"/>
+  
+  <!-- 山頂の建物 -->
+  <path d="M40 35H60V45H40V35Z" fill="#FBBF24"/>
+  <path d="M45 35V30H55V35H45Z" fill="#FBBF24"/>
+  
+  <!-- 階段 -->
+  <path d="M45 45V70H55V45H45Z" fill="#F59E0B" opacity="0.8"/>
+  <path d="M45 50H55M45 55H55M45 60H55M45 65H55" stroke="#334155" stroke-width="2"/>
+</svg>
