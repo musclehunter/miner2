@@ -1,0 +1,190 @@
+{
+  "project_name": "採掘人 (Miner Game)",
+  "version": "0.1.0",
+  "last_updated": "2025-05-17T22:53:12+09:00",
+  "description": "プレイヤーが鉱石を掘って売るブラウザシミュレーションゲーム",
+  "tech_stack": {
+    "backend": {
+      "language": "Go",
+      "framework": "Gin",
+      "database": ["MySQL", "Redis"],
+      "important_packages": [
+        "github.com/gin-gonic/gin",
+        "github.com/go-sql-driver/mysql",
+        "github.com/golang-jwt/jwt/v4",
+        "github.com/google/uuid",
+        "golang.org/x/crypto/bcrypt"
+      ]
+    },
+    "frontend": {
+      "language": "JavaScript",
+      "framework": "Vue.js",
+      "important_packages": [
+        "axios",
+        "vue-router",
+        "vuex"
+      ]
+    },
+    "deployment": {
+      "containerization": "Docker",
+      "orchestration": "Docker Compose"
+    }
+  },
+  "project_structure": {
+    "backend": {
+      "models": "データモデル定義",
+      "handlers": "APIエンドポイントのハンドラー",
+      "database": "データベース関連の処理",
+      "middleware": "ミドルウェア（認証など）"
+    },
+    "frontend": {
+      "src/components": "Vueコンポーネント",
+      "src/views": "画面ビュー",
+      "src/services": "APIサービス",
+      "src/store": "Vuexストア"
+    },
+    "docker": {
+      "mysql": "MySQLコンテナ設定",
+      "redis": "Redisコンテナ設定"
+    }
+  },
+  "data_models": {
+    "User": {
+      "fields": ["ID", "Email", "PasswordHash", "Salt", "CreatedAt", "UpdatedAt"],
+      "description": "ユーザー情報を管理"
+    },
+    "Town": {
+      "fields": ["ID", "Name", "Description", "CreatedAt", "UpdatedAt"],
+      "description": "町の情報を管理"
+    },
+    "Ore": {
+      "fields": ["ID", "Name", "Rarity", "Purity", "ProcessingDifficulty", "CreatedAt", "UpdatedAt"],
+      "description": "鉱石の情報を管理"
+    },
+    "Item": {
+      "fields": ["ID", "Name", "Rarity", "Description", "CreatedAt", "UpdatedAt"],
+      "description": "アイテムの情報を管理"
+    },
+    "Worker": {
+      "fields": ["ID", "Level", "Name", "Strength", "Stamina", "Agility", "Intelligence", "Luck"],
+      "description": "労働者（キャラクター）の情報を管理"
+    }
+  },
+  "api_endpoints": {
+    "auth": {
+      "/api/auth/signup": {
+        "method": "POST",
+        "description": "新規ユーザー登録",
+        "request_body": {
+          "email": "string",
+          "password": "string",
+          "name": "string"
+        },
+        "response": {
+          "token": "string",
+          "user": "User object"
+        }
+      },
+      "/api/auth/login": {
+        "method": "POST",
+        "description": "ユーザーログイン",
+        "request_body": {
+          "email": "string",
+          "password": "string"
+        },
+        "response": {
+          "token": "string",
+          "user": "User object"
+        }
+      },
+      "/api/auth/me": {
+        "method": "GET",
+        "description": "現在のユーザー情報取得",
+        "auth_required": true,
+        "response": {
+          "user": "User object"
+        }
+      }
+    },
+    "game": {
+      "/api/game/towns": {
+        "method": "GET",
+        "description": "全ての町情報取得",
+        "response": {
+          "towns": "Array of Town objects"
+        }
+      },
+      "/api/game/towns/:id": {
+        "method": "GET",
+        "description": "特定の町情報取得",
+        "response": {
+          "town": "Town object"
+        }
+      },
+      "/api/game/ores": {
+        "method": "GET",
+        "description": "全ての鉱石情報取得",
+        "response": {
+          "ores": "Array of Ore objects"
+        }
+      },
+      "/api/game/ores/:id": {
+        "method": "GET",
+        "description": "特定の鉱石情報取得",
+        "response": {
+          "ore": "Ore object"
+        }
+      }
+    }
+  },
+  "development_environment": {
+    "setup": "docker-compose up -d",
+    "backend_restart": "docker-compose restart backend",
+    "frontend_restart": "docker-compose restart frontend",
+    "database_access": "docker-compose exec db mysql -u root -p minerdb",
+    "logs": "docker-compose logs -f"
+  },
+  "implementation_status": {
+    "auth_system": "完了",
+    "town_management": "完了",
+    "ore_management": "完了",
+    "player_inventory": "未実装",
+    "mining_mechanics": "未実装",
+    "frontend_integration": "進行中"
+  },
+  "future_tasks": [
+    "プレイヤーの所持金や鉱石在庫などの管理機能の実装",
+    "採掘メカニズムの実装",
+    "町ごとに異なる鉱石の出現率や特性の設定",
+    "採掘の成功率や採掘量の計算ロジックの実装",
+    "フロントエンドとの連携強化"
+  ],
+  "important_files": {
+    "backend": [
+      "/backend/simple_server.go",
+      "/backend/models/user.go",
+      "/backend/models/town.go",
+      "/backend/models/ore.go",
+      "/backend/handlers/auth.go",
+      "/backend/handlers/game.go",
+      "/backend/database/user_repository.go",
+      "/backend/database/town_repository.go",
+      "/backend/database/ore_repository.go",
+      "/backend/database/initial_data.go"
+    ],
+    "frontend": [
+      "/frontend/src/main.js",
+      "/frontend/src/App.vue",
+      "/frontend/src/services/auth.js",
+      "/frontend/src/services/api.js"
+    ],
+    "deployment": [
+      "/docker-compose.yml",
+      "/docker/mysql/init/01-schema.sql"
+    ],
+    "docs": [
+      "/docs/implementation_status.md",
+      "/readme.md"
+    ]
+  }
+}

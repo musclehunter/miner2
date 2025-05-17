@@ -1,16 +1,20 @@
-module github.com/yourusername/miner2
+module github.com/musclehunter/miner2
 
-go 1.21
+go 1.21.0
+
+toolchain go1.22.9
 
 require (
 	github.com/gin-contrib/cors v1.4.0 // Go 1.21と互換性のあるバージョンを固定
 	github.com/gin-gonic/gin v1.9.1
+	github.com/go-sql-driver/mysql v1.9.2
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/uuid v1.6.0
 	golang.org/x/crypto v0.9.0
 )
 
 require (
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect

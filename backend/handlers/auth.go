@@ -9,11 +9,17 @@ import (
 	"github.com/google/uuid"
 	"github.com/golang-jwt/jwt/v5"
 
-	"github.com/yourusername/miner2/models"
+	"github.com/musclehunter/miner2/database"
+	"github.com/musclehunter/miner2/models"
 )
 
-// ユーザーストア（実際のプロジェクトではDBから取得）
-var users = make(map[string]*models.User)
+// ユーザーリポジトリ
+var userRepo *database.UserRepository
+
+// InitHandlersはハンドラの初期化を行います
+func InitHandlers() {
+	userRepo = database.NewUserRepository(database.DB)
+}
 
 // JWTの秘密鍵（本番環境では環境変数から取得するべき）
 var jwtSecret = []byte("your-secret-key")
@@ -39,17 +45,37 @@ type Claims struct {
 
 // Signup_CreateMockUser はテスト用のユーザーを作成（開発用）
 func Signup_CreateMockUser(email, name, password string) (*models.User, error) {
+	// 既に存在するかチェック
+	existingUser, err := userRepo.GetUserByEmail(email)
+	if err != nil {
+		log.Printf("ユーザー検索エラー: %v", err)
+		return nil, err
+	}
+
+	if existingUser != nil {
+		// 既に存在する場合はそのユーザーを返す
+		log.Printf("ユーザーが既に存在します: %s", email)
+		return existingUser, nil
+	}
+
 	// 新しいユーザーを作成
 	user, err := models.NewUser(email, name, password)
 	if err != nil {
+		log.Printf("ユーザー作成エラー: %v", err)
 		return nil, err
 	}
 
 	// UUIDを生成
 	user.ID = uuid.New().String()
 
-	// ユーザーを保存
-	users[user.ID] = user
+	// データベースに保存
+	err = userRepo.CreateUser(user)
+	if err != nil {
+		log.Printf("ユーザー保存エラー: %v", err)
+		return nil, err
+	}
+
+	log.Printf("モックユーザーを作成しました: %s", email)
 
 	return user, nil
 }
@@ -63,16 +89,22 @@ func Signup(c *gin.Context) {
 	}
 
 	// メールアドレスが既に使用されているかチェック
-	for _, u := range users {
-		if u.Email == req.Email {
-			c.JSON(http.StatusConflict, gin.H{"error": "このメールアドレスは既に使用されています"})
-			return
-		}
+	existingUser, err := userRepo.GetUserByEmail(req.Email)
+	if err != nil {
+		log.Printf("ユーザー検索エラー: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザー検索中にエラーが発生しました"})
+		return
+	}
+
+	if existingUser != nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "このメールアドレスは既に使用されています"})
+		return
 	}
 
 	// 新しいユーザーを作成
 	user, err := models.NewUser(req.Email, req.Name, req.Password)
 	if err != nil {
+		log.Printf("ユーザー作成エラー: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザー作成に失敗しました"})
 		return
 	}
@@ -80,15 +112,23 @@ func Signup(c *gin.Context) {
 	// UUIDを生成
 	user.ID = uuid.New().String()
 
-	// ユーザーを保存（実際のプロジェクトではDBに保存）
-	users[user.ID] = user
+	// ユーザーをデータベースに保存
+	err = userRepo.CreateUser(user)
+	if err != nil {
+		log.Printf("ユーザー保存エラー: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザー保存に失敗しました"})
+		return
+	}
 
 	// JWTトークンを生成
 	token, err := generateToken(user.ID)
 	if err != nil {
+		log.Printf("トークン生成エラー: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "トークン生成に失敗しました"})
 		return
 	}
+
+	log.Printf("新規ユーザー登録成功: %s", req.Email)
 
 	// レスポンス
 	c.JSON(http.StatusCreated, gin.H{
@@ -109,17 +149,26 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	// ユーザーを検索（実際のプロジェクトではDBから検索）
-	var foundUser *models.User
-	for _, u := range users {
-		if u.Email == req.Email {
-			foundUser = u
-			break
-		}
+	log.Printf("ログイン試行: %s", req.Email)
+
+	// ユーザーをデータベースから検索
+	foundUser, err := userRepo.GetUserByEmail(req.Email)
+	if err != nil {
+		log.Printf("ログイン時のユーザー検索エラー: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ログイン処理中にエラーが発生しました"})
+		return
 	}
 
-	// ユーザーが見つからないか、パスワードが一致しない場合
-	if foundUser == nil || !foundUser.CheckPassword(req.Password) {
+	// ユーザーが見つからない場合
+	if foundUser == nil {
+		log.Printf("ログイン失敗: ユーザーが見つかりません %s", req.Email)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "メールアドレスまたはパスワードが正しくありません"})
+		return
+	}
+
+	// パスワードを検証
+	if !foundUser.CheckPassword(req.Password) {
+		log.Printf("ログイン失敗: パスワードが一致しません %s", req.Email)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "メールアドレスまたはパスワードが正しくありません"})
 		return
 	}
@@ -127,9 +176,12 @@ func Login(c *gin.Context) {
 	// JWTトークンを生成
 	token, err := generateToken(foundUser.ID)
 	if err != nil {
+		log.Printf("トークン生成エラー: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "トークン生成に失敗しました"})
 		return
 	}
+
+	log.Printf("ログイン成功: %s", req.Email)
 
 	// レスポンス
 	c.JSON(http.StatusOK, gin.H{
@@ -195,16 +247,23 @@ func AuthMiddleware() gin.HandlerFunc {
 	}
 }
 
-// GetCurrentUser は現在のログインユーザー情報を取得
-func GetCurrentUser(c *gin.Context) {
+// Me は現在のログインユーザー情報を取得
+func Me(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "認証されていません"})
 		return
 	}
 
-	user, exists := users[userID.(string)]
-	if !exists {
+	// データベースからユーザー情報を取得
+	user, err := userRepo.GetUserByID(userID.(string))
+	if err != nil {
+		log.Printf("ユーザー情報取得エラー: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザー情報の取得に失敗しました"})
+		return
+	}
+
+	if user == nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "ユーザーが見つかりません"})
 		return
 	}

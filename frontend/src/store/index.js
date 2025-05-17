@@ -1,4 +1,5 @@
 import { createStore } from 'vuex'
+import authService from '@/services/auth'
 
 export default createStore({
   state: {
@@ -31,25 +32,25 @@ export default createStore({
   },
   actions: {
     // ログイン処理
-    // ESLintの未使用変数警告を一時的に無効化（将来的にはAPI連携で使用予定）
-    // eslint-disable-next-line no-unused-vars
     async login({ commit }, { email, password }) {
       commit('SET_LOADING', true)
       commit('CLEAR_ERROR')
       try {
-        // 実際のAPIコールは後で実装
-        // 今はモックデータで対応
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        // モック処理（バックエンドが準備できていない場合）
+        if (process.env.VUE_APP_USE_MOCK === 'true') {
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          const user = { id: '1', email, name: 'テストユーザー' }
+          commit('SET_USER', user)
+          localStorage.setItem('user', JSON.stringify(user))
+          return true
+        }
         
-        // ダミーのユーザーデータ
-        const user = { id: '1', email, name: 'テストユーザー' }
-        commit('SET_USER', user)
-        
-        // ローカルストレージに保存してセッション維持
-        localStorage.setItem('user', JSON.stringify(user))
+        // 実際のAPIコール
+        const response = await authService.login({ email, password })
+        commit('SET_USER', response.user)
         return true
       } catch (error) {
-        commit('SET_ERROR', error.message || 'ログインに失敗しました')
+        commit('SET_ERROR', error.response?.data?.error || 'ログインに失敗しました')
         return false
       } finally {
         commit('SET_LOADING', false)
@@ -57,29 +58,29 @@ export default createStore({
     },
 
     // サインアップ処理
-    // eslint-disable-next-line no-unused-vars
     async signup({ commit }, { email, password, name }) {
       commit('SET_LOADING', true)
       commit('CLEAR_ERROR')
       try {
-        // 実際のAPIコールは後で実装
-        // 現在はモックデータで対応
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        // 新規ユーザー情報
-        const user = { 
-          id: Date.now().toString(), // 一時的なID
-          email, 
-          name: name || email.split('@')[0] // 名前が指定されていない場合はメールアドレスの@前を使用
+        // モック処理（バックエンドが準備できていない場合）
+        if (process.env.VUE_APP_USE_MOCK === 'true') {
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          const user = { 
+            id: Date.now().toString(),
+            email, 
+            name: name || email.split('@')[0]
+          }
+          commit('SET_USER', user)
+          localStorage.setItem('user', JSON.stringify(user))
+          return true
         }
         
-        commit('SET_USER', user)
-        
-        // ローカルストレージに保存してセッション維持
-        localStorage.setItem('user', JSON.stringify(user))
+        // 実際のAPIコール
+        const response = await authService.signup({ email, password, name: name || email.split('@')[0] })
+        commit('SET_USER', response.user)
         return true
       } catch (error) {
-        commit('SET_ERROR', error.message || 'アカウント登録に失敗しました')
+        commit('SET_ERROR', error.response?.data?.error || 'アカウント登録に失敗しました')
         return false
       } finally {
         commit('SET_LOADING', false)
@@ -88,19 +89,27 @@ export default createStore({
     
     // ログアウト処理
     logout({ commit }) {
+      authService.logout()
       commit('SET_USER', null)
-      localStorage.removeItem('user')
     },
     
     // 起動時にローカルストレージからユーザー情報を復元
-    initAuth({ commit }) {
-      const userStr = localStorage.getItem('user')
-      if (userStr) {
-        try {
-          const user = JSON.parse(userStr)
-          commit('SET_USER', user)
-        } catch (e) {
-          localStorage.removeItem('user')
+    async initAuth({ commit }) {
+      const user = authService.getStoredUser()
+      if (user) {
+        commit('SET_USER', user)
+        
+        // トークンがあればユーザー情報を再取得（開発中はエラーになる可能性があるので条件分岐）
+        if (authService.getToken() && process.env.VUE_APP_USE_MOCK !== 'true') {
+          try {
+            const response = await authService.getCurrentUser()
+            if (response && response.user) {
+              commit('SET_USER', response.user)
+            }
+          } catch (error) {
+            console.error('ユーザー情報取得エラー:', error)
+            // エラーがあってもログアウトはしない（interceptorがあるので）
+          }
         }
       }
     }
