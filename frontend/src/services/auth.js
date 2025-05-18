@@ -40,15 +40,22 @@ export const signup = async (userData) => {
  */
 export const login = async (credentials) => {
   try {
+    console.log('ログインリクエスト送信:', credentials);
     const response = await api.post(AUTH_ENDPOINTS.LOGIN, credentials);
+    console.log('ログインレスポンス受信:', response.data);
+    
     // 成功したらトークンとユーザー情報を保存
     if (response.data && response.data.token) {
+      console.log('トークンを保存:', response.data.token);
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
+    } else {
+      console.warn('レスポンスにトークンが含まれていません:', response.data);
     }
     return response.data;
   } catch (error) {
     console.error('ログインエラー:', error);
+    console.error('エラー詳細:', error.response?.data);
     throw error;
   }
 };

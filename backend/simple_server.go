@@ -206,12 +206,12 @@ func runSimpleServer() {
 		log.Printf("警告: 初期鉱石データ作成エラー: %v", err)
 	}
 
-	// ユーザーリポジトリの作成
-	userRepo := NewUserRepository(db)
-	
-	// ハンドラー初期化
+	// ハンドラー初期化 - 重要: handlers内で共有されるUserRepositoryが初期化される
 	handlers.InitHandlers()   // 認証ハンドラー初期化
 	handlers.InitGameHandlers() // ゲームハンドラー初期化
+	
+	// ユーザーリポジトリの作成 - こちらは/api/usersエンドポイント専用
+	userRepo := NewUserRepository(db)
 
 	// Ginルーターの設定
 	gin.SetMode(gin.DebugMode)

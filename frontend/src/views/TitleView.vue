@@ -210,13 +210,25 @@ export default {
     const error = computed(() => store.state.error);
     
     const handleLogin = async () => {
-      const success = await store.dispatch('login', {
-        email: email.value,
-        password: password.value
-      });
-      
-      if (success) {
-        router.push('/world-map');
+      console.log('ログインボタンがクリックされました');
+      try {
+        const success = await store.dispatch('login', {
+          email: email.value,
+          password: password.value
+        });
+        
+        console.log('ログイン結果:', success);
+        
+        // successがtrueの場合のみワールドマップに遷移
+        if (success === true) {
+          console.log('ログイン成功、ワールドマップに遷移します');
+          router.push('/world-map');
+        } else {
+          console.error('ログイン失敗');
+          // エラーが表示されるので何もしない
+        }
+      } catch (error) {
+        console.error('ログイン中にエラーが発生しました:', error);
       }
     };
     

@@ -19,6 +19,7 @@ var userRepo *database.UserRepository
 // InitHandlersはハンドラの初期化を行います
 func InitHandlers() {
 	userRepo = database.NewUserRepository(database.DB)
+	log.Println("認証ハンドラーの初期化完了: UserRepository設定済み")
 }
 
 // JWTの秘密鍵（本番環境では環境変数から取得するべき）
@@ -152,6 +153,7 @@ func Login(c *gin.Context) {
 	log.Printf("ログイン試行: %s", req.Email)
 
 	// ユーザーをデータベースから検索
+	log.Printf("ユーザー検索開始: email=%s, userRepo=%v", req.Email, userRepo)
 	foundUser, err := userRepo.GetUserByEmail(req.Email)
 	if err != nil {
 		log.Printf("ログイン時のユーザー検索エラー: %v", err)
@@ -165,6 +167,8 @@ func Login(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "メールアドレスまたはパスワードが正しくありません"})
 		return
 	}
+	
+	log.Printf("ユーザー検索結果: %+v", foundUser)
 
 	// パスワードを検証
 	if !foundUser.CheckPassword(req.Password) {
@@ -174,6 +178,7 @@ func Login(c *gin.Context) {
 	}
 
 	// JWTトークンを生成
+	log.Printf("トークン生成開始: ユーザーID=%s", foundUser.ID)
 	token, err := generateToken(foundUser.ID)
 	if err != nil {
 		log.Printf("トークン生成エラー: %v", err)
@@ -181,17 +186,19 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	log.Printf("ログイン成功: %s", req.Email)
+	log.Printf("ログイン成功: メール=%s, ユーザーID=%s, トークン=%s", req.Email, foundUser.ID, token[:10]+"...")
 
 	// レスポンス
-	c.JSON(http.StatusOK, gin.H{
+	response := gin.H{
 		"token": token,
 		"user": gin.H{
 			"id":    foundUser.ID,
 			"email": foundUser.Email,
 			"name":  foundUser.Name,
 		},
-	})
+	}
+	log.Printf("レスポンス送信: %+v", response)
+	c.JSON(http.StatusOK, response)
 }
 
 // generateToken はJWTトークンを生成

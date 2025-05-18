@@ -38,6 +38,7 @@ export default createStore({
       try {
         // モック処理（バックエンドが準備できていない場合）
         if (process.env.VUE_APP_USE_MOCK === 'true') {
+          console.log('モックモードでログイン中')
           await new Promise(resolve => setTimeout(resolve, 1000))
           const user = { id: '1', email, name: 'テストユーザー' }
           commit('SET_USER', user)
@@ -46,10 +47,21 @@ export default createStore({
         }
         
         // 実際のAPIコール
+        console.log('本番モードでAPIログイン中', { email, password })
         const response = await authService.login({ email, password })
+        
+        // 明確にトークンとユーザー情報が含まれているか確認
+        if (!response || !response.token || !response.user) {
+          console.error('無効なレスポンス形式:', response)
+          commit('SET_ERROR', 'ログインレスポンスが不正です')
+          return false
+        }
+        
+        console.log('ログイン成功:', response.user)
         commit('SET_USER', response.user)
         return true
       } catch (error) {
+        console.error('ログインエラー発生:', error)
         commit('SET_ERROR', error.response?.data?.error || 'ログインに失敗しました')
         return false
       } finally {

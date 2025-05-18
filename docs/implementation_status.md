@@ -20,10 +20,13 @@
 - **ユーザー登録 (Signup)**: 新規ユーザーの作成
 - **ログイン (Login)**: 既存ユーザーの認証
 - **認証ミドルウェア**: 保護されたエンドポイントへのアクセス制御
+- **ルートガード**: 認証されていないユーザーがゲーム画面にアクセスすることを防止
 
 ユーザー認証には以下のセキュリティ対策が実装されています：
 - パスワードのbcryptハッシュ化（ソルト付き）
 - JWTトークンによるセッション管理
+- ローカルストレージによる認証情報の保持
+- Vue Routerのナビゲーションガードによる認証チェック
 
 ### 2. ゲームデータ基盤
 
@@ -163,6 +166,69 @@ CREATE TABLE IF NOT EXISTS ores (
 - 認証機能と町・鉱石情報の表示機能をフロントエンドと連携
 - ゲームUIの実装
 
+## フロントエンドの認証フロー
+
+Vue.jsフロントエンドでは、以下の認証フローが実装されています：
+
+### 1. ルートガード
+
+```javascript
+// 認証状態の確認関数
+const isAuthenticated = () => {
+  const token = localStorage.getItem('token')
+  const user = localStorage.getItem('user')
+  return !!token && !!user
+}
+
+// グローバルナビゲーションガード
+router.beforeEach((to, from, next) => {
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+  const isUserAuthenticated = isAuthenticated()
+  
+  if (requiresAuth && !isUserAuthenticated) {
+    // 認証が必要だが認証されていない場合、タイトル画面にリダイレクト
+    next({ name: 'title' })
+  } else {
+    // それ以外は通常の遷移を許可
+    next()
+  }
+})
+```
+
+### 2. Vuexストアでの認証管理
+
+Vuexストアを使用して認証状態を管理し、以下のアクションを実装しています：
+
+- `login`: ユーザーのログイン処理
+- `signup`: 新規ユーザー登録処理
+- `logout`: ログアウト処理
+- `initAuth`: アプリ起動時の認証状態復元
+
+### 3. 環境設定とモックモード
+
+開発環境では、環境設定ファイルを使用してAPIアクセスを制御しています：
+
+```
+# 環境設定ファイル (.env, .env.development)
+VUE_APP_API_URL=http://localhost:8080/api  # APIのURL
+VUE_APP_USE_MOCK=false                   # モックモードの制御
+```
+
+- `VUE_APP_USE_MOCK=true`: モックデータを使用し、バックエンドAPIへのリクエストは送信されません
+- `VUE_APP_USE_MOCK=false`: 実際にバックエンドAPIへリクエストを送信します
+
+未登録ユーザーのログインを防止するため、`VUE_APP_USE_MOCK=false`に設定する必要があります。
+
+### 4. 保護されたルート
+
+以下のルートは認証が必要（`requiresAuth: true`）と設定されています：
+
+- `/world-map`: ワールドマップ画面
+- `/base`: 拡点管理画面
+- `/market`: 市場画面
+- `/workers`: 労働者管理画面
+- `/mail`: メール画面
+
 ## 実行方法
 
 ### 開発環境の起動
@@ -173,6 +239,9 @@ docker-compose up -d
 
 # バックエンドのみ再起動
 docker-compose restart backend
+
+# フロントエンドのみ再起動
+docker-compose restart frontend
 ```
 
 ### APIアクセス例
