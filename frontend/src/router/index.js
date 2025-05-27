@@ -11,6 +11,15 @@ const isAuthenticated = () => {
   return !!token && !!user
 }
 
+// 管理者認証確認関数
+const isAdminAuthenticated = () => {
+  // ローカルストレージから管理者トークンを取得
+  const adminToken = localStorage.getItem('adminToken')
+  
+  // 管理者トークンが存在する場合は認証済み
+  return !!adminToken
+}
+
 const routes = [
   {
     path: '/',
@@ -47,6 +56,36 @@ const routes = [
     name: 'mail',
     component: () => import(/* webpackChunkName: "mail" */ '../views/MailView.vue'),
     meta: { requiresAuth: true } // 認証が必要
+  },
+  // 管理者用ルート
+  {
+    path: '/admin/login',
+    name: 'adminLogin',
+    component: () => import(/* webpackChunkName: "admin-login" */ '../views/admin/AdminLoginView.vue')
+  },
+  {
+    path: '/admin',
+    name: 'adminDashboard',
+    component: () => import(/* webpackChunkName: "admin-dashboard" */ '../views/admin/AdminDashboardView.vue'),
+    meta: { requiresAdmin: true } // 管理者認証が必要
+  },
+  {
+    path: '/admin/users',
+    name: 'adminUsers',
+    component: () => import(/* webpackChunkName: "admin-users" */ '../views/admin/AdminUsersView.vue'),
+    meta: { requiresAdmin: true }
+  },
+  {
+    path: '/admin/pending-users',
+    name: 'adminPendingUsers',
+    component: () => import(/* webpackChunkName: "admin-pending-users" */ '../views/admin/AdminPendingUsersView.vue'),
+    meta: { requiresAdmin: true }
+  },
+  {
+    path: '/admin/towns',
+    name: 'adminTowns',
+    component: () => import(/* webpackChunkName: "admin-towns" */ '../views/admin/AdminTownsView.vue'),
+    meta: { requiresAdmin: true }
   }
 ]
 
@@ -59,14 +98,21 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   // ルートが認証を必要とする場合と認証状態をチェック
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
+  const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin)
   const isUserAuthenticated = isAuthenticated()
+  const isAdmin = isAdminAuthenticated()
   
-  console.log(`ルート遷移: ${from.path} -> ${to.path}, 認証必要: ${requiresAuth}, 認証状態: ${isUserAuthenticated}`)
+  console.log(`ルート遷移: ${from.path} -> ${to.path}, ユーザー認証必要: ${requiresAuth}, 管理者認証必要: ${requiresAdmin}`)
+  console.log(`ユーザー認証状態: ${isUserAuthenticated}, 管理者認証状態: ${isAdmin}`)
   
   if (requiresAuth && !isUserAuthenticated) {
-    // 認証が必要だが認証されていない場合、タイトル画面にリダイレクト
+    // ユーザー認証が必要だが認証されていない場合、タイトル画面にリダイレクト
     console.warn('未認証ユーザーのアクセスを拒否します')
     next({ name: 'title' })
+  } else if (requiresAdmin && !isAdmin) {
+    // 管理者認証が必要だが認証されていない場合、管理者ログイン画面にリダイレクト
+    console.warn('未認証管理者のアクセスを拒否します')
+    next({ name: 'adminLogin' })
   } else {
     // それ以外は通常の遷移を許可
     next()

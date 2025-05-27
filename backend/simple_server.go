@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	
+	"github.com/musclehunter/miner2/cache"
 	"github.com/musclehunter/miner2/database"
 	"github.com/musclehunter/miner2/handlers"
 )
@@ -197,6 +198,10 @@ func runSimpleServer() {
 	// データベースをグローバル変数に設定してhandlersから使用可能にする
 	database.DB = db
 
+	// Redisキャッシュを初期化
+	log.Println("Redisキャッシュを初期化しています...")
+	cache.InitRedisClient()
+	
 	// 初期データの作成
 	log.Println("初期データをチェックしています...")
 	if err := database.CreateInitialTowns(); err != nil {
@@ -207,8 +212,9 @@ func runSimpleServer() {
 	}
 
 	// ハンドラー初期化 - 重要: handlers内で共有されるUserRepositoryが初期化される
-	handlers.InitHandlers()   // 認証ハンドラー初期化
-	handlers.InitGameHandlers() // ゲームハンドラー初期化
+	handlers.InitHandlers()       // 認証ハンドラー初期化
+	handlers.InitGameHandlers()   // ゲームハンドラー初期化
+	handlers.InitAdminHandlers()  // 管理者ハンドラー初期化
 	
 	// ユーザーリポジトリの作成 - こちらは/api/usersエンドポイント専用
 	userRepo := NewUserRepository(db)
@@ -237,6 +243,10 @@ func runSimpleServer() {
 		auth.POST("/signup", handlers.Signup)
 		auth.POST("/login", handlers.Login)
 		auth.GET("/me", handlers.AuthMiddleware(), handlers.Me)
+		
+		// メール確認関連のエンドポイント
+		auth.GET("/verify-email", handlers.VerifyEmail)             // メール確認
+		auth.POST("/resend-verification", handlers.ResendVerificationEmail)  // 確認メール再送信
 	}
 	
 	// ゲーム関連のエンドポイント
@@ -257,9 +267,36 @@ func runSimpleServer() {
 			// 今後ここに認証が必要なゲームエンドポイントを追加
 		}
 	}
+	
+	// 管理者ログインエンドポイント（認証なし）
+	r.POST("/api/admin/login", handlers.AdminLogin)
+	
+	// 管理者エンドポイント（認証あり）
+	admin := r.Group("/api/admin")
+	admin.Use(handlers.AdminAuth()) // 管理者認証ミドルウェアを適用
+	{
+		// ユーザー管理
+		admin.GET("/users", handlers.GetAllUsers)
+		admin.GET("/users/:id", handlers.GetUserDetail)
+		admin.PUT("/users/:id", handlers.UpdateUser)
+		admin.DELETE("/users/:id", handlers.DeleteUser)
+		
+		// 未確認ユーザー管理
+		admin.GET("/pending-users", handlers.GetAllPendingUsers)
+		admin.DELETE("/pending-users/:token", handlers.DeletePendingUser)
+		
+		// 町管理
+		admin.GET("/towns", handlers.GetAllTownsAdmin)
+		admin.POST("/towns", handlers.CreateTown)
+		admin.PUT("/towns/:id", handlers.UpdateTown)
+		admin.DELETE("/towns/:id", handlers.DeleteTown)
+	}
 
 	// サーバー起動
-	port := "8080"
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080" // デフォルトポート
+	}
 	log.Printf("サーバーを起動しています: http://localhost:%s", port)
 	if err := r.Run(":" + port); err != nil {
 		log.Fatalf("サーバー起動エラー: %v", err)

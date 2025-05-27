@@ -1,7 +1,7 @@
 {
   "project_name": "採掘人 (Miner Game)",
   "version": "0.1.0",
-  "last_updated": "2025-05-17T22:53:12+09:00",
+  "last_updated": "2025-05-28T00:26:08+09:00",
   "description": "プレイヤーが鉱石を掘って売るブラウザシミュレーションゲーム",
   "tech_stack": {
     "backend": {
@@ -35,7 +35,9 @@
       "models": "データモデル定義",
       "handlers": "APIエンドポイントのハンドラー",
       "database": "データベース関連の処理",
-      "middleware": "ミドルウェア（認証など）"
+      "middleware": "ミドルウェア（認証など）",
+      "cache": "Redisキャッシュ管理",
+      "mail": "メール送信機能"
     },
     "frontend": {
       "src/components": "Vueコンポーネント",
@@ -52,6 +54,10 @@
     "User": {
       "fields": ["ID", "Email", "PasswordHash", "Salt", "CreatedAt", "UpdatedAt"],
       "description": "ユーザー情報を管理"
+    },
+    "PendingUser": {
+      "fields": ["Email", "Name", "Password"],
+      "description": "メール確認待ちの仮登録ユーザー情報を管理"
     },
     "Town": {
       "fields": ["ID", "Name", "Description", "CreatedAt", "UpdatedAt"],
@@ -104,6 +110,140 @@
         "response": {
           "user": "User object"
         }
+      },
+      "/api/auth/verify-email": {
+        "method": "GET",
+        "description": "メールアドレス確認",
+        "query_params": {
+          "token": "string"
+        },
+        "response": {
+          "message": "string"
+        }
+      },
+      "/api/auth/resend-verification": {
+        "method": "POST",
+        "description": "確認メール再送信",
+        "request_body": {
+          "email": "string"
+        },
+        "response": {
+          "message": "string"
+        }
+      }
+    },
+    "admin": {
+      "/api/admin/users": {
+        "method": "GET",
+        "description": "全ユーザー一覧取得",
+        "auth_required": true,
+        "admin_required": true,
+        "response": {
+          "users": "Array of User objects"
+        }
+      },
+      "/api/admin/users_get/:id": {
+        "method": "GET",
+        "path": "/api/admin/users/:id",
+        "description": "ユーザー詳細取得",
+        "auth_required": true,
+        "admin_required": true,
+        "response": {
+          "user": "User object"
+        }
+      },
+      "/api/admin/users_update/:id": {
+        "method": "PUT",
+        "path": "/api/admin/users/:id",
+        "description": "ユーザー情報更新",
+        "auth_required": true,
+        "admin_required": true,
+        "request_body": {
+          "email": "string",
+          "name": "string"
+        },
+        "response": {
+          "message": "string",
+          "user": "User object"
+        }
+      },
+      "/api/admin/users_delete/:id": {
+        "method": "DELETE",
+        "path": "/api/admin/users/:id",
+        "description": "ユーザー削除",
+        "auth_required": true,
+        "admin_required": true,
+        "response": {
+          "message": "string"
+        }
+      },
+      "/api/admin/pending-users": {
+        "method": "GET",
+        "description": "未確認ユーザー一覧取得",
+        "auth_required": true,
+        "admin_required": true,
+        "response": {
+          "pendingUsers": "Array of PendingUser objects"
+        }
+      },
+      "/api/admin/pending-users/:token": {
+        "method": "DELETE",
+        "description": "未確認ユーザーの削除",
+        "auth_required": true,
+        "admin_required": true,
+        "response": {
+          "message": "string"
+        }
+      },
+      "/api/admin/towns_list": {
+        "method": "GET",
+        "path": "/api/admin/towns",
+        "description": "町一覧取得（管理用）",
+        "auth_required": true,
+        "admin_required": true,
+        "response": {
+          "towns": "Array of Town objects"
+        }
+      },
+      "/api/admin/towns_create": {
+        "method": "POST",
+        "path": "/api/admin/towns",
+        "description": "新規町作成",
+        "auth_required": true,
+        "admin_required": true,
+        "request_body": {
+          "name": "string",
+          "description": "string"
+        },
+        "response": {
+          "message": "string",
+          "town": "Town object"
+        }
+      },
+      "/api/admin/towns_update/:id": {
+        "method": "PUT",
+        "path": "/api/admin/towns/:id",
+        "description": "町情報更新",
+        "auth_required": true,
+        "admin_required": true,
+        "request_body": {
+          "name": "string",
+          "description": "string"
+        },
+        "response": {
+          "message": "string",
+          "town": "Town object"
+        }
+      },
+      "/api/admin/towns_delete/:id": {
+        "method": "DELETE",
+        "path": "/api/admin/towns/:id",
+        "description": "町削除",
+        "auth_required": true,
+        "admin_required": true,
+        "response": {
+          "message": "string"
+        }
       }
     },
     "game": {
@@ -146,8 +286,11 @@
   },
   "implementation_status": {
     "auth_system": "完了",
+    "email_verification": "完了",
+    "admin_interface": "完了",
     "town_management": "完了",
     "ore_management": "完了",
+    "redis_cache": "完了",
     "player_inventory": "未実装",
     "mining_mechanics": "未実装",
     "frontend_integration": "進行中"
@@ -165,12 +308,17 @@
       "/backend/models/user.go",
       "/backend/models/town.go",
       "/backend/models/ore.go",
+      "/backend/models/pending_user.go",
       "/backend/handlers/auth.go",
       "/backend/handlers/game.go",
+      "/backend/handlers/admin.go",
+      "/backend/handlers/pending_users.go",
       "/backend/database/user_repository.go",
       "/backend/database/town_repository.go",
       "/backend/database/ore_repository.go",
-      "/backend/database/initial_data.go"
+      "/backend/database/initial_data.go",
+      "/backend/cache/redis.go",
+      "/backend/mail/mail.go"
     ],
     "frontend": [
       "/frontend/src/main.js",

@@ -6,14 +6,17 @@ export default createStore({
     user: null,
     isAuthenticated: false,
     loading: false,
-    error: null
+    error: null,
+    successMessage: null
   },
   getters: {
     isAuthenticated: state => state.isAuthenticated,
     currentUser: state => state.user,
     isLoading: state => state.loading,
     hasError: state => state.error !== null,
-    getError: state => state.error
+    getError: state => state.error,
+    hasSuccessMessage: state => state.successMessage !== null,
+    getSuccessMessage: state => state.successMessage
   },
   mutations: {
     SET_USER(state, user) {
@@ -25,9 +28,19 @@ export default createStore({
     },
     SET_ERROR(state, error) {
       state.error = error
+      // エラーが設定されたら成功メッセージをクリア
+      state.successMessage = null
     },
     CLEAR_ERROR(state) {
       state.error = null
+    },
+    SET_SUCCESS_MESSAGE(state, message) {
+      state.successMessage = message
+      // 成功メッセージが設定されたらエラーをクリア
+      state.error = null
+    },
+    CLEAR_SUCCESS_MESSAGE(state) {
+      state.successMessage = null
     }
   },
   actions: {
@@ -73,23 +86,21 @@ export default createStore({
     async signup({ commit }, { email, password, name }) {
       commit('SET_LOADING', true)
       commit('CLEAR_ERROR')
+      commit('CLEAR_SUCCESS_MESSAGE')
       try {
         // モック処理（バックエンドが準備できていない場合）
         if (process.env.VUE_APP_USE_MOCK === 'true') {
           await new Promise(resolve => setTimeout(resolve, 1000))
-          const user = { 
-            id: Date.now().toString(),
-            email, 
-            name: name || email.split('@')[0]
-          }
-          commit('SET_USER', user)
-          localStorage.setItem('user', JSON.stringify(user))
+          // モックモードでも、メール確認プロセスをシミュレートするため、
+          // ユーザーを認証済みとしてマークしない
           return true
         }
         
         // 実際のAPIコール
         const response = await authService.signup({ email, password, name: name || email.split('@')[0] })
-        commit('SET_USER', response.user)
+        // サインアップ成功後、ユーザーはまだ認証されていない
+        // メール確認後にのみ認証される
+        console.log('サインアップ成功:', response)
         return true
       } catch (error) {
         commit('SET_ERROR', error.response?.data?.error || 'アカウント登録に失敗しました')

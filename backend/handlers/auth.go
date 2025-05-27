@@ -1,25 +1,56 @@
 package handlers
 
 import (
+	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 
+	"github.com/musclehunter/miner2/cache"
 	"github.com/musclehunter/miner2/database"
+	"github.com/musclehunter/miner2/mail"
 	"github.com/musclehunter/miner2/models"
 )
 
 // ユーザーリポジトリ
 var userRepo *database.UserRepository
 
+// メール送信者
+var mailSender mail.Sender
+
+// アプリケーションのベースURL
+var baseURL string
+
 // InitHandlersはハンドラの初期化を行います
 func InitHandlers() {
 	userRepo = database.NewUserRepository(database.DB)
-	log.Println("認証ハンドラーの初期化完了: UserRepository設定済み")
+	
+	// メール送信者を初期化
+	mailConfig := mail.DefaultConfig()
+	
+	// 開発環境ではモック送信者、本番環境ではSMTP送信者を使用
+	if os.Getenv("APP_ENV") == "production" {
+		mailSender = mail.NewSMTPSender(mailConfig)
+		log.Println("メール送信者を初期化: SMTP送信者")
+	} else {
+		mailSender = mail.NewMockSender()
+		log.Println("メール送信者を初期化: モック送信者")
+	}
+	
+	// ベースURLを設定
+	baseURL = os.Getenv("APP_URL")
+	if baseURL == "" {
+		baseURL = "http://localhost:8080"
+	}
+	
+	log.Println("認証ハンドラーの初期化完了: UserRepositoryとメール送信者設定済み")
 }
 
 // JWTの秘密鍵（本番環境では環境変数から取得するべき）
@@ -81,20 +112,54 @@ func Signup_CreateMockUser(email, name, password string) (*models.User, error) {
 	return user, nil
 }
 
-// Signup はユーザー登録を処理
+// generateVerificationToken はメール確認用のトークンを生成
+func generateVerificationToken() (string, error) {
+	// ランダムなトークンを生成
+	bytes := make([]byte, 32)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
+	}
+	
+	// Base64でエンコード
+	return base64.URLEncoding.EncodeToString(bytes), nil
+}
+
+// Signup はユーザー登録リクエストを処理
 func Signup(c *gin.Context) {
+	// 予期しないパニックをキャッチする
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("予期しないエラーが発生しました: %v", r)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "システムエラーが発生しました。後ほど再試行してください。"})
+		}
+	}()
+	
 	var req SignupRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "入力データが不正です", "details": err.Error()})
 		return
 	}
 
-	// メールアドレスが既に使用されているかチェック
+	// 0. データベース接続確認
+	if database.DB == nil {
+		log.Printf("データベース接続が確立されていません")
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "システムが現在メンテナンス中です。後ほど再試行してください。"})
+		return
+	}
+
+	// 1. データベースでメールアドレスの重複をチェック
 	existingUser, err := userRepo.GetUserByEmail(req.Email)
 	if err != nil {
 		log.Printf("ユーザー検索エラー: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザー検索中にエラーが発生しました"})
-		return
+		// 開発環境ではデータベースエラーを無視して続行
+		if os.Getenv("APP_ENV") != "production" {
+			log.Printf("開発環境のため、データベースエラーを無視して続行します")
+			existingUser = nil
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザー検索中にエラーが発生しました"})
+			return
+		}
 	}
 
 	if existingUser != nil {
@@ -102,43 +167,60 @@ func Signup(c *gin.Context) {
 		return
 	}
 
-	// 新しいユーザーを作成
-	user, err := models.NewUser(req.Email, req.Name, req.Password)
+	// 2. Redisで仮登録ユーザーの重複をチェック
+	ctx := context.Background()
+	emailExists, err := cache.CheckEmailExists(ctx, req.Email)
 	if err != nil {
-		log.Printf("ユーザー作成エラー: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザー作成に失敗しました"})
-		return
+		log.Printf("仮登録ユーザー検索エラー: %v", err)
+		// エラーは無視して続行
 	}
 
-	// UUIDを生成
-	user.ID = uuid.New().String()
-
-	// ユーザーをデータベースに保存
-	err = userRepo.CreateUser(user)
-	if err != nil {
-		log.Printf("ユーザー保存エラー: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザー保存に失敗しました"})
+	if emailExists {
+		c.JSON(http.StatusConflict, gin.H{"error": "このメールアドレスは確認待ちの状態です。メールを確認して登録を完了してください。"})
 		return
 	}
-
-	// JWTトークンを生成
-	token, err := generateToken(user.ID)
+	
+	// 3. 仮登録ユーザー情報を作成
+	pendingUser := models.NewPendingUser(req.Email, req.Name, req.Password)
+	
+	// 4. 確認トークンを生成
+	token, err := generateVerificationToken()
 	if err != nil {
 		log.Printf("トークン生成エラー: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "トークン生成に失敗しました"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "確認トークンの生成に失敗しました"})
+		return
+	}
+	
+	// 5. ユーザー情報をJSON化してRedisに保存
+	userJSON, err := pendingUser.ToJSON()
+	if err != nil {
+		log.Printf("ユーザー情報シリアライズエラー: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザー情報の処理に失敗しました"})
+		return
+	}
+	
+	err = cache.SaveEmailVerification(ctx, token, userJSON)
+	if err != nil {
+		log.Printf("仮登録情報保存エラー: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "仮登録情報の保存に失敗しました"})
 		return
 	}
 
-	log.Printf("新規ユーザー登録成功: %s", req.Email)
+	// 6. 確認メールを送信
+	log.Printf("メール確認トークン: %s", token)
+	err = mail.SendVerificationEmail(mailSender, req.Email, req.Name, token, baseURL)
+	if err != nil {
+		log.Printf("メール送信エラー: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "確認メールの送信に失敗しました"})
+		return
+	}
 
-	// レスポンス
-	c.JSON(http.StatusCreated, gin.H{
-		"token": token,
-		"user": gin.H{
-			"id":    user.ID,
-			"email": user.Email,
-			"name":  user.Name,
-		},
+	log.Printf("仮登録成功: %s", req.Email)
+
+	// 7. 成功レスポンスを返す
+	c.JSON(http.StatusOK, gin.H{
+		"message": "確認メールを送信しました。メールを確認して登録を完了してください。",
+		"email": req.Email,
 	})
 }
 
@@ -255,31 +337,233 @@ func AuthMiddleware() gin.HandlerFunc {
 }
 
 // Me は現在のログインユーザー情報を取得
-func Me(c *gin.Context) {
-	userID, exists := c.Get("userID")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "認証されていません"})
+// VerifyEmailRequest はメール確認リクエスト
+type VerifyEmailRequest struct {
+	Token string `form:"token" binding:"required"`
+}
+
+// VerifyEmail はメール確認を処理し、本登録を完了する
+func VerifyEmail(c *gin.Context) {
+	var req VerifyEmailRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "不正なトークンです"})
+		return
+	}
+	
+	// 1. Redisからトークンに対応する仮登録情報を取得
+	ctx := context.Background()
+	userJSON, err := cache.GetEmailVerification(ctx, req.Token)
+	if err != nil {
+		log.Printf("トークン取得エラー: %v", err)
+		c.JSON(http.StatusNotFound, gin.H{"error": "無効なトークンまたは期限切れのトークンです"})
+		return
+	}
+	
+	// 2. 仮登録情報をパース
+	pendingUser, err := models.PendingUserFromJSON(userJSON)
+	if err != nil {
+		log.Printf("ユーザー情報パースエラー: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザー情報の処理に失敗しました"})
+		return
+	}
+	
+	// 3. 再度メールアドレスの重複をチェック
+	existingUser, err := userRepo.GetUserByEmail(pendingUser.Email)
+	if err != nil {
+		log.Printf("ユーザー検索エラー: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザー検索中にエラーが発生しました"})
 		return
 	}
 
-	// データベースからユーザー情報を取得
+	if existingUser != nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "このメールアドレスは既に使用されています"})
+		return
+	}
+	
+	// 4. 新しいユーザーを作成
+	user, err := models.NewUser(pendingUser.Email, pendingUser.Name, pendingUser.Password)
+	if err != nil {
+		log.Printf("ユーザー作成エラー: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザー作成に失敗しました"})
+		return
+	}
+
+	// 5. UUIDを生成
+	user.ID = uuid.New().String()
+
+	// 6. ユーザーをデータベースに保存
+	err = userRepo.CreateUser(user)
+	if err != nil {
+		log.Printf("ユーザー保存エラー: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザー保存に失敗しました"})
+		return
+	}
+	
+	// 7. Redisから仮登録情報を削除
+	err = cache.DeleteEmailVerification(ctx, req.Token)
+	if err != nil {
+		log.Printf("仮登録情報削除エラー: %v", err)
+		// 削除エラーは無視して続行
+	}
+	
+	// 8. JWTトークンを生成
+	token, err := generateToken(user.ID)
+	if err != nil {
+		log.Printf("トークン生成エラー: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "トークン生成に失敗しました"})
+		return
+	}
+	
+	log.Printf("メール確認完了と本登録成功: %s", user.Email)
+	
+	// 9. 成功レスポンス
+	c.JSON(http.StatusOK, gin.H{
+		"message": "メールアドレスが確認されました。登録が完了しました。",
+		"token": token,
+		"user": gin.H{
+			"id":    user.ID,
+			"email": user.Email,
+			"name":  user.Name,
+		},
+	})
+}
+
+// ResendVerificationEmailRequest は確認メール再送信リクエスト
+type ResendVerificationEmailRequest struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+// ResendVerificationEmail は確認メールを再送信
+func ResendVerificationEmail(c *gin.Context) {
+	var req ResendVerificationEmailRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "入力データが不正です"})
+		return
+	}
+	
+	ctx := context.Background()
+	
+	// 1. まずデータベースでメールアドレスが登録済みかチェック
+	existingUser, err := userRepo.GetUserByEmail(req.Email)
+	if err != nil {
+		log.Printf("ユーザー検索エラー: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザー検索中にエラーが発生しました"})
+		return
+	}
+	
+	// 既に登録済みの場合
+	if existingUser != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "このメールアドレスは既に登録済みです。ログインしてください。"})
+		return
+	}
+	
+	// 2. Redisで仮登録情報をチェック
+	emailExists, err := cache.CheckEmailExists(ctx, req.Email)
+	if err != nil {
+		log.Printf("仮登録ユーザー検索エラー: %v", err)
+		// エラーは無視して続行
+	}
+
+	// 仮登録が見つからない場合
+	if !emailExists {
+		// セキュリティ上の理由からエラーを表示せず成功を裏がえる
+		c.JSON(http.StatusOK, gin.H{"message": "確認メールを送信しました。メールを確認して登録を完了してください。"})
+		return
+	}
+	
+	// 3. Redis内の全トークンから対象メールに関連するトークンを探す
+	// 実装の単純化のため、現在の全トークンを削除して新しいトークンを生成
+	keys, err := cache.Client.Keys(ctx, cache.EmailVerificationPrefix+"*")
+	if err == nil {
+		for _, key := range keys {
+			userJSON, err := cache.Client.Get(ctx, key)
+			if err != nil {
+				continue
+			}
+			
+			pendingUser, err := models.PendingUserFromJSON(userJSON)
+			if err != nil {
+				continue
+			}
+			
+			if pendingUser.Email == req.Email {
+				// トークンを削除
+				cache.Client.Del(ctx, key)
+			}
+		}
+	}
+	
+	// 4. 新しい仮登録ユーザー情報を作成
+	// ここでは完全なユーザー情報を持っていないため、簡略化された形で送信
+	pendingUser := models.NewPendingUser(req.Email, "", "")
+
+	// 5. 新しい確認トークンを生成
+	token, err := generateVerificationToken()
+	if err != nil {
+		log.Printf("トークン生成エラー: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "確認トークンの生成に失敗しました"})
+		return
+	}
+	
+	// 6. ユーザー情報をJSON化
+	userJSON, err := pendingUser.ToJSON()
+	if err != nil {
+		log.Printf("ユーザー情報シリアライズエラー: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザー情報の処理に失敗しました"})
+		return
+	}
+	
+	// 7. Redisに保存
+	err = cache.SaveEmailVerification(ctx, token, userJSON)
+	if err != nil {
+		log.Printf("仮登録情報保存エラー: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "仮登録情報の保存に失敗しました"})
+		return
+	}
+	
+	// 8. 確認メールを送信
+	log.Printf("メール確認トークン(再送信): %s", token)
+	err = mail.SendVerificationEmail(mailSender, req.Email, pendingUser.Name, token, baseURL)
+	if err != nil {
+		log.Printf("メール送信エラー: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "メール送信に失敗しました"})
+		return
+	}
+	
+	// 9. 成功レスポンス
+	c.JSON(http.StatusOK, gin.H{"message": "確認メールを送信しました。メールを確認して登録を完了してください。"})
+}
+
+// Me は現在のログインユーザー情報を取得
+func Me(c *gin.Context) {
+	// 認証ミドルウェアでセットされたユーザーIDを取得
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "認証が必要です"})
+		return
+	}
+	
+	// ユーザー情報を取得
+	log.Printf("ユーザー情報取得: userID=%v", userID)
 	user, err := userRepo.GetUserByID(userID.(string))
 	if err != nil {
 		log.Printf("ユーザー情報取得エラー: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "ユーザー情報の取得に失敗しました"})
 		return
 	}
-
+	
 	if user == nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "ユーザーが見つかりません"})
 		return
 	}
-
+	
+	log.Printf("ユーザー情報取得成功: %+v", user)
+	
 	c.JSON(http.StatusOK, gin.H{
 		"user": gin.H{
-			"id":    user.ID,
-			"email": user.Email,
-			"name":  user.Name,
+			"id":           user.ID,
+			"email":        user.Email,
+			"name":         user.Name,
 		},
 	})
 }

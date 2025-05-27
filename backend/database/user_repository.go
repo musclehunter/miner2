@@ -146,3 +146,70 @@ func (r *UserRepository) UpdateUser(user *models.User) error {
 
 	return nil
 }
+
+// DeleteUser はユーザーを削除します
+func (r *UserRepository) DeleteUser(userID string) error {
+	query := `
+		DELETE FROM users
+		WHERE id = ?
+	`
+
+	_, err := r.db.Exec(query, userID)
+	if err != nil {
+		log.Printf("ユーザー削除エラー: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+// GetAllUsers は全ユーザーを取得します
+func (r *UserRepository) GetAllUsers() ([]*models.User, error) {
+	query := `
+		SELECT id, email, password_hash, salt, created_at, updated_at
+		FROM users
+		ORDER BY created_at DESC
+	`
+
+	rows, err := r.db.Query(query)
+	if err != nil {
+		log.Printf("ユーザー一覧取得エラー: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []*models.User
+	for rows.Next() {
+		user := &models.User{}
+		// nameフィールドはデータベースにはないがクライアント互換性のため空の値を設定
+		user.Name = ""
+
+		err := rows.Scan(
+			&user.ID,
+			&user.Email,
+			&user.PasswordHash,
+			&user.Salt,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		)
+		if err != nil {
+			log.Printf("ユーザーデータスキャンエラー: %v", err)
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	if err = rows.Err(); err != nil {
+		log.Printf("ユーザーデータ取得エラー: %v", err)
+		return nil, err
+	}
+
+	return users, nil
+}
+
+// 注意: このプロジェクトの設計では、メール確認後にのみユーザーがデータベースに登録されます。
+// 未確認ユーザーは全てRedisに保存されるため、このメソッドは不要です。
+
+// 注意: このプロジェクトの設計では、確認トークンはRedisに保存され、データベースには保存されないため、
+// このメソッドは不要です。

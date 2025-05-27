@@ -123,3 +123,44 @@ func (r *TownRepository) CreateTown(town *models.Town) error {
 
 	return nil
 }
+
+// UpdateTown は町の情報を更新します
+func (r *TownRepository) UpdateTown(town *models.Town) error {
+	query := `
+		UPDATE towns
+		SET name = ?, description = ?, updated_at = ?
+		WHERE id = ?
+	`
+
+	town.UpdatedAt = time.Now()
+
+	_, err := r.db.Exec(
+		query,
+		town.Name,
+		town.Description,
+		town.UpdatedAt,
+		town.ID,
+	)
+	if err != nil {
+		log.Printf("町更新エラー: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+// DeleteTown は町を削除します
+func (r *TownRepository) DeleteTown(townID string) error {
+	query := `
+		DELETE FROM towns
+		WHERE id = ?
+	`
+
+	_, err := r.db.Exec(query, townID)
+	if err != nil {
+		log.Printf("町削除エラー: %v", err)
+		return err
+	}
+
+	return nil
+}

@@ -22,6 +22,11 @@
             {{ error }}
           </div>
           
+          <!-- 成功メッセージ -->
+          <div v-if="successMessage" class="bg-green-900/30 border border-green-500 text-green-200 px-4 py-2 rounded text-sm whitespace-pre-line">
+            {{ successMessage }}
+          </div>
+          
           <!-- メールアドレス -->
           <div>
             <label for="email" class="block text-sm font-medium text-light-dark mb-1">メールアドレス</label>
@@ -208,6 +213,7 @@ export default {
     
     const loading = computed(() => store.state.loading);
     const error = computed(() => store.state.error);
+    const successMessage = computed(() => store.state.successMessage);
     
     const handleLogin = async () => {
       console.log('ログインボタンがクリックされました');
@@ -260,7 +266,16 @@ export default {
       });
       
       if (success) {
-        router.push('/world-map');
+        // 登録成功時は、ワールドマップに遷移するのではなく、確認メッセージを表示
+        store.commit('SET_SUCCESS_MESSAGE', '登録が完了しました。メールアドレスを確認して登録を完了してください。\n\n開発環境では、トークンはサーバーのログに表示されます。');
+        
+        // 入力フィールドをクリア
+        registerEmail.value = '';
+        registerPassword.value = '';
+        confirmPassword.value = '';
+        
+        // ログインフォームに切り替え
+        showRegister.value = false;
       }
     };
     
@@ -278,6 +293,7 @@ export default {
       showRegister,
       loading,
       error,
+      successMessage,
       handleLogin,
       handleRegister,
       toggleMode

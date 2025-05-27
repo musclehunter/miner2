@@ -39,12 +39,16 @@ docker-compose up -d
 
 ```
 backend/
-├── main.go           # エントリーポイント
-├── routes/           # ルート定義
-├── controllers/      # コントローラー
-├── models/           # データモデル
-├── middleware/       # ミドルウェア
-└── utils/            # ユーティリティ
+│   simple_server.go  # エントリーポイント
+│   handlers/         # ハンドラー関数
+│   ├── auth.go       # 認証関連ハンドラー
+│   ├── game.go       # ゲーム関連ハンドラー
+│   ├── admin.go      # 管理者用ハンドラー
+│   └── pending_users.go # 未確認ユーザー管理
+│   models/           # データモデル
+│   database/         # データベース関連
+│   cache/            # Redisキャッシュ関連
+└── mail/             # メール送信関連
 ```
 
 ### フロントエンド開発 (Vue.js)
@@ -99,6 +103,53 @@ docker-compose down
 
 コンテナを再ビルド（依存関係の変更時）:
 ```bash
+
+## 機能概要
+
+### メール認証システム
+
+ユーザー登録時にメール認証を実行します。主なフローは以下のとおりです：
+
+1. ユーザーがメールアドレスとパスワードで登録を実行
+2. ユーザー情報がRedisに仮登録され、メール確認トークンが生成される
+3. メール確認リンクが送信される
+4. ユーザーがメール内のリンクをクリックしてメールアドレスを確認
+5. 確認後、Redisから情報が取得され、正式にデータベースにユーザーが登録される
+
+関連エンドポイント：
+- `POST /api/auth/signup`: ユーザー登録と確認メール送信
+- `GET /api/auth/verify-email`: メール確認トークンの検証
+- `POST /api/auth/resend-verification`: 確認メールの再送信
+
+### 管理者API
+
+管理者向けのAPIエンドポイントが実装されています。すべての管理者APIは `AdminAuth` ミドルウェアによって保護されています。
+
+主な管理者API機能：
+
+#### ユーザー管理
+- `GET /api/admin/users`: 全ユーザー一覧取得
+- `GET /api/admin/users/:id`: ユーザー詳細取得
+- `PUT /api/admin/users/:id`: ユーザー情報更新
+- `DELETE /api/admin/users/:id`: ユーザー削除
+
+#### 未確認ユーザー管理
+- `GET /api/admin/pending-users`: メール未確認ユーザー一覧取得
+
+#### 町データ管理
+- `GET /api/admin/towns`: 町一覧取得
+- `POST /api/admin/towns`: 新規町作成
+- `PUT /api/admin/towns/:id`: 町情報更新
+- `DELETE /api/admin/towns/:id`: 町削除
+
+### Redisキャッシュ
+
+Redisは主に以下の目的で使用されています：
+
+1. メール確認トークンの保存
+2. 未確認ユーザーの仮登録情報の管理
+
+開発環境ではモックRedisクライアントが使用され、本番環境では実際Redisサーバに接続します。
 docker-compose build
 ```
 
