@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col items-center justify-center min-h-screen w-full p-4 bg-dark bg-[url('@/assets/images/mine-bg.svg')] bg-cover bg-center">
+  <div class="flex flex-col items-center justify-center min-h-[calc(100vh-56px)] w-full p-4 bg-dark bg-[url('@/assets/images/mine-bg.svg')] bg-cover bg-center">
     <!-- ロゴ部分 -->
     <div class="mb-16 animate-float">
       <h1 class="title-text text-5xl md:text-7xl font-bold text-light drop-shadow-[0_0_10px_rgba(59,130,246,0.7)] mb-3">

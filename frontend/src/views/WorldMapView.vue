@@ -1,17 +1,11 @@
 <template>
   <div class="min-h-screen bg-dark bg-[url('@/assets/images/world-map-bg.svg')] bg-cover bg-center">
-    <!-- ヘッダー部分 -->
-    <header class="p-4 bg-dark-lighter/80 backdrop-blur-sm border-b border-dark-light">
-      <div class="container mx-auto flex justify-between items-center">
+    <!-- コンテンツタイトル -->
+    <div class="p-4">
+      <div class="container mx-auto">
         <h1 class="text-2xl font-bold text-light">ワールドマップ</h1>
-        <div class="flex items-center gap-4">
-          <router-link to="/" class="text-light-dark hover:text-light transition-colors">
-            <span class="hidden md:inline mr-1">タイトルに戻る</span>
-            <span>🏠</span>
-          </router-link>
-        </div>
       </div>
-    </header>
+    </div>
 
     <div class="container mx-auto py-6 px-4">
       <!-- 説明テキスト -->
