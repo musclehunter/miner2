@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/musclehunter/miner2/models"
 )
 
@@ -122,20 +124,91 @@ func (c *MockRedisClient) Keys(ctx context.Context, pattern string) ([]string, e
 // Client はデフォルトのRedisクライアント
 var Client RedisClient
 
-// 実際のRedisクライアント実装は別ファイルで定義
+// 実際のRedisクライアント実装
+type RedisClientImpl struct {
+	client *redis.Client
+}
+
+// NewRedisClient は実際のRedisクライアントを作成
+func NewRedisClient(host string, port int, password string) *RedisClientImpl {
+	addr := fmt.Sprintf("%s:%d", host, port)
+	log.Printf("Redisに接続: %s", addr)
+	
+	client := redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Password: password,
+		DB:       0, // デフォルトのデータベース
+	})
+	
+	return &RedisClientImpl{
+		client: client,
+	}
+}
+
+// Set はRedisに値を設定
+func (c *RedisClientImpl) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
+	log.Printf("Redis: SET %s=%v (expiration: %v)", key, value, expiration)
+	return c.client.Set(ctx, key, value, expiration).Err()
+}
+
+// Get はRedisから値を取得
+func (c *RedisClientImpl) Get(ctx context.Context, key string) (string, error) {
+	result, err := c.client.Get(ctx, key).Result()
+	if err != nil {
+		return "", err
+	}
+	log.Printf("Redis: GET %s=%s", key, result)
+	return result, nil
+}
+
+// Del はRedisから値を削除
+func (c *RedisClientImpl) Del(ctx context.Context, keys ...string) error {
+	log.Printf("Redis: DEL %v", keys)
+	return c.client.Del(ctx, keys...).Err()
+}
+
+// Exists はキーが存在するかチェック
+func (c *RedisClientImpl) Exists(ctx context.Context, key string) (bool, error) {
+	result, err := c.client.Exists(ctx, key).Result()
+	if err != nil {
+		return false, err
+	}
+	return result > 0, nil
+}
+
+// Keys はパターンに一致するキーを取得
+func (c *RedisClientImpl) Keys(ctx context.Context, pattern string) ([]string, error) {
+	return c.client.Keys(ctx, pattern).Result()
+}
 
 // InitRedisClient はRedisクライアントを初期化
 func InitRedisClient() {
-	// 開発環境ではモッククライアントを使用
-	// 本番環境ではgo-redis/redisクライアントを使用予定
-	if os.Getenv("APP_ENV") == "production" {
-		log.Println("本番環境用Redisクライアントを初期化します（未実装）")
-		// 実際のRedisクライアントの初期化はまだ実装されていません
-		// 現時点ではモッククライアントを使用します
-		Client = NewMockRedisClient()
-	} else {
+	// 環境変数からRedis設定を取得
+	host := os.Getenv("REDIS_HOST")
+	if host == "" {
+		host = "localhost" // デフォルト値
+	}
+	
+	portStr := os.Getenv("REDIS_PORT")
+	port := 6379 // デフォルト値
+	if portStr != "" {
+		portVal, err := strconv.Atoi(portStr)
+		if err == nil {
+			port = portVal
+		}
+	}
+	
+	password := os.Getenv("REDIS_PASSWORD")
+	
+	// モック使用の環境変数を確認
+	useMock := os.Getenv("USE_MOCK_REDIS")
+	
+	if useMock == "true" {
 		log.Println("開発環境用モックRedisクライアントを初期化します")
 		Client = NewMockRedisClient()
+	} else {
+		log.Printf("実際のRedisクライアントを初期化します: %s:%d", host, port)
+		Client = NewRedisClient(host, port, password)
 	}
 }
 

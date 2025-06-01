@@ -149,7 +149,18 @@ Redisは主に以下の目的で使用されています：
 1. メール確認トークンの保存
 2. 未確認ユーザーの仮登録情報の管理
 
-開発環境ではモックRedisクライアントが使用され、本番環境では実際Redisサーバに接続します。
+開発環境では、環境変数 `USE_MOCK_REDIS` でRedisクライアントの使用を制御できます：
+
+- `USE_MOCK_REDIS=true`: メモリ内モックRedisクライアントを使用
+- `USE_MOCK_REDIS=false`: Docker環境内の実際Redisサーバーに接続
+
+デフォルトでは `docker-compose.yml` で `USE_MOCK_REDIS=false` が設定されており、実際Redisサーバーを使用します。本番環境でも同様に実際Redisサーバーに接続します。
+
+Redis接続には以下の環境変数を使用します：
+
+- `REDIS_HOST`: Redisサーバーのホスト名（デフォルト: `redis`）
+- `REDIS_PORT`: Redisサーバーのポート（デフォルト: `6379`）
+- `REDIS_PASSWORD`: Redisのパスワード（デフォルト: 空）
 docker-compose build
 ```
 
