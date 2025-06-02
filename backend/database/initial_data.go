@@ -31,41 +31,67 @@ func CreateInitialTowns() error {
 		return nil
 	}
 
-	// 初期町データ
+	// 初期町データ - world_setting.mdに基づく7地域
 	towns := []struct {
 		ID          string
 		Name        string
 		Description string
+		PositionX   int
+		PositionY   int
 	}{
 		{
 			ID:          "1",
-			Name:        "アイアンヒル",
-			Description: "鉄鉱石の産地として知られる古い鉱山の町。丘陵地帯に位置し、町の周りには多くの鉄鉱山が点在しています。",
+			Name:        "ルナフロスト",
+			Description: "北方のルナリス氷原に位置する半地下都市。氷精族が住まい、常に雪に覆われた美しい都市。",
+			PositionX:   50,
+			PositionY:   15,
 		},
 		{
 			ID:          "2",
-			Name:        "シルバーレイク",
-			Description: "銀鉱石が豊富な湖のほとりにある町。美しい湖の底には伝説の銀脈があると言われています。",
+			Name:        "スカイスパイア",
+			Description: "北東のアエリド天空断崖に浮かぶ空中都市。羽人族が住み、浮遠石と鎖で支えられた壁々が特徴。",
+			PositionX:   80,
+			PositionY:   30,
 		},
 		{
 			ID:          "3",
-			Name:        "ゴールドクレスト",
-			Description: "金鉱脈が発見されて栄えた歴史ある町。多くの採掘人が富を求めてこの地に集まります。",
+			Name:        "シルヴァリオン",
+			Description: "東方のフェイエルフ深緑大森林に位置する螺旋都市。森エルフ族が住み、巨大な神木を中心に発展した。",
+			PositionX:   85,
+			PositionY:   50,
 		},
 		{
 			ID:          "4",
-			Name:        "クリスタルヴェイル",
-			Description: "美しい結晶が取れる渓谷近くの町。透明度の高い水晶や希少な宝石類が採掘できることで有名です。",
+			Name:        "インゴットリム",
+			Description: "南東のマグノーム火山地帯に位置する鉄鋼の都市。溶炉ドワーフ族が住み、火山口に建つ鉱山都市。",
+			PositionX:   70,
+			PositionY:   70,
 		},
 		{
 			ID:          "5",
-			Name:        "コッパークリーク",
-			Description: "銅鉱石の採掘で栄えた小さな町。小川のほとりに位置し、周辺の山々には多くの銅鉱脈が走っています。",
+			Name:        "ザル＝バディア",
+			Description: "南方の広大な砂漠に位置するオアシス都市。砂漠獣人族（サンドビーストキン）が住み、地下水脈を利用した都市。",
+			PositionX:   50,
+			PositionY:   80,
+		},
+		{
+			ID:          "6",
+			Name:        "フォグヴェイル",
+			Description: "南西の湿地に位置する霧に覆われた都市。半霊アンデッド（ミレニアル）族が住み、矢立つ石塔群で特徴づけられる。",
+			PositionX:   30,
+			PositionY:   70,
+		},
+		{
+			ID:          "7",
+			Name:        "キャメロス",
+			Description: "西方の高原城塁地帯に位置する人間の都市。多層城壁と市場が特徴で、交易ハブとして機能している。",
+			PositionX:   15,
+			PositionY:   50,
 		},
 	}
 
 	// 町データの挿入
-	stmt, err := tx.Prepare("INSERT INTO towns (id, name, description, created_at, updated_at) VALUES (?, ?, ?, NOW(), NOW())")
+	stmt, err := tx.Prepare("INSERT INTO towns (id, name, description, position_x, position_y, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW())")
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -73,7 +99,7 @@ func CreateInitialTowns() error {
 	defer stmt.Close()
 
 	for _, town := range towns {
-		_, err := stmt.Exec(town.ID, town.Name, town.Description)
+		_, err := stmt.Exec(town.ID, town.Name, town.Description, town.PositionX, town.PositionY)
 		if err != nil {
 			tx.Rollback()
 			return err

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="fog-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e6e6e6" />
+      <stop offset="100%" stop-color="#c0c0c0" />
+    </linearGradient>
+    <filter id="blur-filter">
+      <feGaussianBlur stdDeviation="2" />
+    </filter>
+  </defs>
+  <circle cx="50" cy="50" r="45" fill="#2d3047" />
+  <!-- 霧と雲 -->
+  <path d="M10 50 C20 45, 30 55, 40 50 C50 45, 60 55, 70 50 C80 45, 90 55, 95 45" 
+      fill="url(#fog-gradient)" opacity="0.7" filter="url(#blur-filter)" />
+  <path d="M5 60 C15 55, 25 65, 35 60 C45 55, 55 65, 65 60 C75 55, 85 65, 90 55" 
+      fill="url(#fog-gradient)" opacity="0.7" filter="url(#blur-filter)" />
+  <path d="M15 70 C25 65, 35 75, 45 70 C55 65, 65 75, 75 70 C85 65, 95 75, 90 65" 
+      fill="url(#fog-gradient)" opacity="0.7" filter="url(#blur-filter)" />
+  <!-- 建物のシルエット -->
+  <path d="M30 50 L30 70 L40 70 L40 50 L45 40 L35 40 Z" 
+      fill="#5d5d5d" opacity="0.8" />
+  <path d="M50 45 L50 70 L65 70 L65 45 L60 35 L55 35 Z" 
+      fill="#5d5d5d" opacity="0.8" />
+  <rect x="45" y="60" width="15" height="10" fill="#5d5d5d" opacity="0.8" />
+  <!-- 船 -->
+  <path d="M70 65 C75 60, 80 62, 80 65 L70 65 Z" 
+      fill="#8d6e63" />
+  <line x1="75" y1="55" x2="75" y2="65" stroke="#8d6e63" stroke-width="1" />
+  <path d="M75 55 L79 60 L75 58 Z" fill="#d7ccc8" />
+</svg>

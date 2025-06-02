@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd700" />
+      <stop offset="100%" stop-color="#b8860b" />
+    </linearGradient>
+    <linearGradient id="stone-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a0a0a0" />
+      <stop offset="100%" stop-color="#707070" />
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="45" fill="#2a2a40" />
+  <!-- 城壁 -->
+  <path d="M30 55 L30 75 L70 75 L70 55 Z" 
+      fill="url(#stone-gradient)" stroke="#909090" stroke-width="1" />
+  <!-- 城壁の装飾 -->
+  <path d="M30 55 L35 55 L35 50 L40 50 L40 55 L45 55 L45 50 L50 50 L50 55 L55 55 L55 50 L60 50 L60 55 L65 55 L65 50 L70 50 L70 55" 
+      fill="none" stroke="#909090" stroke-width="1" />
+  <!-- 中央の大きな塔 -->
+  <path d="M45 55 L45 40 L55 40 L55 55 Z" 
+      fill="url(#stone-gradient)" stroke="#909090" stroke-width="1" />
+  <path d="M47 40 L47 35 L53 35 L53 40" 
+      fill="url(#stone-gradient)" stroke="#909090" stroke-width="1" />
+  <path d="M48 35 L48 30 L52 30 L52 35" 
+      fill="url(#stone-gradient)" stroke="#909090" stroke-width="1" />
+  <!-- 旗 -->
+  <line x1="50" y1="30" x2="50" y2="20" stroke="#707070" stroke-width="1" />
+  <path d="M50 20 L58 22 L50 24 Z" fill="url(#gold-gradient)" />
+  <!-- 側面の塔 -->
+  <path d="M35 55 L35 45 L42 45 L42 55" 
+      fill="url(#stone-gradient)" stroke="#909090" stroke-width="1" />
+  <path d="M58 55 L58 45 L65 45 L65 55" 
+      fill="url(#stone-gradient)" stroke="#909090" stroke-width="1" />
+  <!-- 正門 -->
+  <path d="M48 75 L48 65 L52 65 L52 75" 
+      fill="#4a4a4a" stroke="#707070" stroke-width="1" />
+  <path d="M48 65 L48 60 C48 58, 52 58, 52 60 L52 65 Z" 
+      fill="#4a4a4a" stroke="#707070" stroke-width="1" />
+</svg>

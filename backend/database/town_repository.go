@@ -23,7 +23,7 @@ func NewTownRepository(db *sql.DB) *TownRepository {
 // GetAllTowns は全ての町情報を取得します
 func (r *TownRepository) GetAllTowns() ([]*models.Town, error) {
 	query := `
-		SELECT id, name, description, created_at, updated_at
+		SELECT id, name, description, position_x, position_y, created_at, updated_at
 		FROM towns
 		ORDER BY name
 	`
@@ -42,6 +42,8 @@ func (r *TownRepository) GetAllTowns() ([]*models.Town, error) {
 			&town.ID,
 			&town.Name,
 			&town.Description,
+			&town.PositionX,
+			&town.PositionY,
 			&town.CreatedAt,
 			&town.UpdatedAt,
 		)
@@ -63,7 +65,7 @@ func (r *TownRepository) GetAllTowns() ([]*models.Town, error) {
 // GetTownByID はIDから町情報を取得します
 func (r *TownRepository) GetTownByID(id string) (*models.Town, error) {
 	query := `
-		SELECT id, name, description, created_at, updated_at
+		SELECT id, name, description, position_x, position_y, created_at, updated_at
 		FROM towns
 		WHERE id = ?
 	`
@@ -73,6 +75,8 @@ func (r *TownRepository) GetTownByID(id string) (*models.Town, error) {
 		&town.ID,
 		&town.Name,
 		&town.Description,
+		&town.PositionX,
+		&town.PositionY,
 		&town.CreatedAt,
 		&town.UpdatedAt,
 	)
@@ -91,8 +95,8 @@ func (r *TownRepository) GetTownByID(id string) (*models.Town, error) {
 // CreateTown は新しい町をデータベースに保存します
 func (r *TownRepository) CreateTown(town *models.Town) error {
 	query := `
-		INSERT INTO towns (id, name, description, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?)
+		INSERT INTO towns (id, name, description, position_x, position_y, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
 	`
 
 	// IDが設定されていない場合は生成
@@ -113,6 +117,8 @@ func (r *TownRepository) CreateTown(town *models.Town) error {
 		town.ID,
 		town.Name,
 		town.Description,
+		town.PositionX,
+		town.PositionY,
 		town.CreatedAt,
 		town.UpdatedAt,
 	)
@@ -128,7 +134,7 @@ func (r *TownRepository) CreateTown(town *models.Town) error {
 func (r *TownRepository) UpdateTown(town *models.Town) error {
 	query := `
 		UPDATE towns
-		SET name = ?, description = ?, updated_at = ?
+		SET name = ?, description = ?, position_x = ?, position_y = ?, updated_at = ?
 		WHERE id = ?
 	`
 
@@ -138,6 +144,8 @@ func (r *TownRepository) UpdateTown(town *models.Town) error {
 		query,
 		town.Name,
 		town.Description,
+		town.PositionX,
+		town.PositionY,
 		town.UpdatedAt,
 		town.ID,
 	)

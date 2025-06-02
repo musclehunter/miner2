@@ -155,8 +155,8 @@ Authorization: Bearer <jwt_token>
     "population": 1000,
     "prosperity": 70,
     "security": 80,
-    "x_coord": 50,
-    "y_coord": 50
+    "position_x": 50,
+    "position_y": 50
   },
   {
     "id": "2",
@@ -165,8 +165,8 @@ Authorization: Bearer <jwt_token>
     "population": 500,
     "prosperity": 40,
     "security": 60,
-    "x_coord": 80,
-    "y_coord": 30
+    "position_x": 80,
+    "position_y": 30
   }
 ]
 ```
@@ -188,8 +188,8 @@ Authorization: Bearer <jwt_token>
   "population": 1000,
   "prosperity": 70,
   "security": 80,
-  "x_coord": 50,
-  "y_coord": 50,
+  "position_x": 50,
+  "position_y": 50,
   "created_at": "2023-01-01T00:00:00Z",
   "updated_at": "2023-01-01T00:00:00Z"
 }

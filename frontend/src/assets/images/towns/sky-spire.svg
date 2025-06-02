@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a8c0ff" />
+      <stop offset="100%" stop-color="#7090e0" />
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="45" fill="#2a3b4c" />
+  <!-- 中央の空中都市を表す塔 -->
+  <path d="M50 10 L60 30 L70 30 L65 45 L75 45 L60 60 L65 75 L50 90 L35 75 L40 60 L25 45 L35 45 L30 30 L40 30 Z" 
+      fill="url(#sky-gradient)" stroke="#d0e0ff" stroke-width="1.5" />
+  <!-- 浮遠石を表す小さな浮かぶ石 -->
+  <circle cx="30" cy="25" r="5" fill="#c0d0ff" opacity="0.8" />
+  <circle cx="70" cy="25" r="5" fill="#c0d0ff" opacity="0.8" />
+  <circle cx="25" cy="55" r="4" fill="#c0d0ff" opacity="0.8" />
+  <circle cx="75" cy="55" r="4" fill="#c0d0ff" opacity="0.8" />
+  <!-- 鎖の表現 -->
+  <line x1="30" y1="25" x2="25" y2="40" stroke="#d0e0ff" stroke-width="1" />
+  <line x1="70" y1="25" x2="75" y2="40" stroke="#d0e0ff" stroke-width="1" />
+  <line x1="25" y1="55" x2="30" y2="70" stroke="#d0e0ff" stroke-width="1" />
+  <line x1="75" y1="55" x2="70" y2="70" stroke="#d0e0ff" stroke-width="1" />
+</svg>

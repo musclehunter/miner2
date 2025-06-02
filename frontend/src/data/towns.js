@@ -1,21 +1,99 @@
 /**
- * 町のモックデータ
+ * 町のモックデータ - world_setting.mdに基づいた7つの地域
  */
 export const towns = [
   {
     id: '1',
-    name: 'アイアンヒル',
-    description: '鉄鉱石の産地として知られる古い鉱山の町。職人たちが多く住み、優れた鍛冶屋がいる。',
+    name: 'ルナフロスト',
+    description: '北方のルナリス氷原に位置する半地下都市。氷精族が住まい、常に雪に覆われた美しい都市。',
     features: [
-      '鉄鉱石の取引が盛ん',
-      '鍛冶職人が多い',
-      '古い鉱山がある'
+      '氷の結晶の採掘が盛ん',
+      '夜間には特別な力を発揮する',
+      '満月時に特別なイベントが発生'
+    ],
+    resources: {
+      iron: 2,
+      copper: 1,
+      silver: 4,
+      gold: 1,
+      crystal: 5
+    },
+    marketTraits: {
+      buyingPower: 4,
+      priceVariation: 3,
+      specialtyDemand: 'crystal'
+    },
+    population: 5800,
+    difficultyLevel: 3,
+    position: { x: 50, y: 15 },
+    imageUrl: 'luna-frost.svg'
+  },
+  {
+    id: '2',
+    name: 'スカイスパイア',
+    description: '北東のアエリド天空断崖に浮かぶ空中都市。羽人族が住み、浮遠石と鎖で支えられた壁々が特徴。',
+    features: [
+      '雲上の古代遺跡がある',
+      '空を滑空する技術が発達',
+      '雷属性の鉱物が采掘可能'
+    ],
+    resources: {
+      iron: 3,
+      copper: 2,
+      silver: 3,
+      gold: 2,
+      crystal: 4
+    },
+    marketTraits: {
+      buyingPower: 5,
+      priceVariation: 4,
+      specialtyDemand: 'thunder_crystal'
+    },
+    population: 7200,
+    difficultyLevel: 4,
+    position: { x: 80, y: 30 },
+    imageUrl: 'sky-spire.svg'
+  },
+  {
+    id: '3',
+    name: 'シルヴァリオン',
+    description: '東方のフェイエルフ深緑大森林に位置する螺旋都市。森エルフ族が住み、巨大な神木を中心に発展した。',
+    features: [
+      '自然系魔法が発達',
+      '希少な植物材が采取可能',
+      '树木の高所に展開する立体都市'
+    ],
+    resources: {
+      iron: 1,
+      copper: 3,
+      silver: 2,
+      gold: 2,
+      crystal: 4
+    },
+    marketTraits: {
+      buyingPower: 4,
+      priceVariation: 3,
+      specialtyDemand: 'nature_crystal'
+    },
+    population: 6800,
+    difficultyLevel: 3,
+    position: { x: 85, y: 50 },
+    imageUrl: 'sylvarion.svg'
+  },
+  {
+    id: '4',
+    name: 'インゴットリム',
+    description: '南東のマグノーム火山地帯に位置する鉄鋼の都市。溶炉ドワーフ族が住み、火山口に建つ鉱山都市。',
+    features: [
+      '高品質の武器・防具の製造',
+      '耐熱装備が必要な鉱山',
+      '古代ドワーフの技術が残る'
     ],
     resources: {
       iron: 5,
-      copper: 3,
-      silver: 1,
-      gold: 0,
+      copper: 4,
+      silver: 2,
+      gold: 3,
       crystal: 1
     },
     marketTraits: {
@@ -23,114 +101,88 @@ export const towns = [
       priceVariation: 2,
       specialtyDemand: 'iron'
     },
-    population: 6500,
-    difficultyLevel: 1,
-    position: { x: 30, y: 40 },
-    imageUrl: 'iron-hill.svg'
+    population: 5500,
+    difficultyLevel: 4,
+    position: { x: 70, y: 70 },
+    imageUrl: 'ingot-rim.svg'
   },
   {
-    id: '2',
-    name: 'シルバーレイク',
-    description: '美しい湖の近くに建つ町。銀鉱石が産出されることで知られ、高級品の取引が盛ん。',
+    id: '5',
+    name: 'ザル＝バディア',
+    description: '南方の広大な砂漠に位置するオアシス都市。砂漠獣人族（サンドビーストキン）が住み、地下水脈を利用した都市。',
     features: [
-      '銀の取引が盛ん',
-      '高級品市場がある',
-      '美しい湖の景観'
+      '砂層に無尽の資源が埋もれている',
+      '状況に合わせた狩猟技術が発達',
+      '日中は炎熱、夜間は凍結する激しい環境'
     ],
     resources: {
-      iron: 2,
-      copper: 2,
-      silver: 5,
-      gold: 2,
-      crystal: 3
-    },
-    marketTraits: {
-      buyingPower: 5,
-      priceVariation: 3,
-      specialtyDemand: 'silver'
-    },
-    population: 8200,
-    difficultyLevel: 2,
-    position: { x: 65, y: 30 },
-    imageUrl: 'silver-lake.svg'
-  },
-  {
-    id: '3',
-    name: 'ゴールドクレスト',
-    description: '山頂に築かれた豪華な町。金鉱脈が発見されて以来、冒険者や富豪が集まる。',
-    features: [
-      '金の採掘が盛ん',
-      '高級市場がある',
-      '裕福な顧客が多い'
-    ],
-    resources: {
-      iron: 1,
-      copper: 1,
-      silver: 3,
-      gold: 5,
+      iron: 3,
+      copper: 3,
+      silver: 2,
+      gold: 4,
       crystal: 2
     },
     marketTraits: {
-      buyingPower: 5,
-      priceVariation: 4,
+      buyingPower: 4,
+      priceVariation: 5,
       specialtyDemand: 'gold'
     },
     population: 4800,
     difficultyLevel: 4,
-    position: { x: 80, y: 70 },
-    imageUrl: 'gold-crest.svg'
+    position: { x: 50, y: 80 },
+    imageUrl: 'zal-badia.svg'
   },
   {
-    id: '4',
-    name: 'クリスタルヴェイル',
-    description: '神秘的な谷に位置する町。特殊な結晶が採れることで知られ、魔術師が多く訪れる。',
+    id: '6',
+    name: 'フォグヴェイル',
+    description: '南西の湿地に位置する霧に覆われた都市。半霊アンデッド（ミレニアル）族が住み、矢立つ石塔群で特徴づけられる。',
     features: [
-      '希少な結晶が採取できる',
-      '魔術関連の取引が盛ん',
-      '神秘的な雰囲気'
-    ],
-    resources: {
-      iron: 1,
-      copper: 2,
-      silver: 2,
-      gold: 3,
-      crystal: 5
-    },
-    marketTraits: {
-      buyingPower: 3,
-      priceVariation: 5,
-      specialtyDemand: 'crystal'
-    },
-    population: 3200,
-    difficultyLevel: 5,
-    position: { x: 20, y: 80 },
-    imageUrl: 'crystal-vale.svg'
-  },
-  {
-    id: '5',
-    name: 'コッパークリーク',
-    description: '小さな川沿いに発展した町。銅鉱石が豊富に採れ、工芸品や日用品の製造が盛ん。',
-    features: [
-      '銅の取引が盛ん',
-      '工芸品製造が活発',
-      '川沿いの風景'
+      '霊魂と交わる独自の文化',
+      '毒・病気などの状態異常に注意が必要',
+      '夏の黒泥底には豪華な保管庫が眠る'
     ],
     resources: {
       iron: 2,
-      copper: 5,
-      silver: 1,
-      gold: 0,
-      crystal: 1
+      copper: 3,
+      silver: 4,
+      gold: 3,
+      crystal: 3
     },
     marketTraits: {
       buyingPower: 3,
-      priceVariation: 2,
+      priceVariation: 4,
+      specialtyDemand: 'silver'
+    },
+    population: 4200,
+    difficultyLevel: 5,
+    position: { x: 30, y: 70 },
+    imageUrl: 'fogveil.svg'
+  },
+  {
+    id: '7',
+    name: 'キャメロス',
+    description: '西方の高原城塁地帯に位置する人間の都市。多層城壁と市場が特徴で、交易ハブとして機能している。',
+    features: [
+      '世界各地からの商人が集まる交易拠点',
+      '多様な職業ギルドが存在',
+      '初心者向けのクエストが豊富'
+    ],
+    resources: {
+      iron: 3,
+      copper: 4,
+      silver: 3,
+      gold: 2,
+      crystal: 2
+    },
+    marketTraits: {
+      buyingPower: 5,
+      priceVariation: 3,
       specialtyDemand: 'copper'
     },
-    population: 5100,
+    population: 12000,
     difficultyLevel: 1,
-    position: { x: 50, y: 60 },
-    imageUrl: 'copper-creek.svg'
+    position: { x: 15, y: 50 },
+    imageUrl: 'cameloth.svg'
   }
 ];
 

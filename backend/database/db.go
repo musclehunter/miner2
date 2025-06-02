@@ -68,6 +68,34 @@ func getEnv(key, defaultValue string) string {
 func CloseDB() {
 	if DB != nil {
 		DB.Close()
+		DB = nil
 		log.Println("データベース接続を閉じました")
 	}
+}
+
+// ConnectDB は新しいデータベース接続を返します（マイグレーション用）
+func ConnectDB() (*sql.DB, error) {
+	// 環境変数からDB接続情報を取得（環境変数がない場合はデフォルト値を使用）
+	dbHost := getEnv("DB_HOST", "db")
+	dbPort := getEnv("DB_PORT", "3306")
+	dbUser := getEnv("DB_USER", "miner_user")
+	dbPass := getEnv("DB_PASSWORD", "miner_password")
+	dbName := getEnv("DB_NAME", "miner_db")
+
+	// MySQL接続文字列
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		dbUser, dbPass, dbHost, dbPort, dbName)
+
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	// 接続確認
+	if err = db.Ping(); err != nil {
+		db.Close()
+		return nil, err
+	}
+
+	return db, nil
 }

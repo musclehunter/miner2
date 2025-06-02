@@ -1,7 +1,7 @@
 {
   "project_name": "採掘人 (Miner Game)",
   "version": "0.1.0",
-  "last_updated": "2025-05-28T00:26:08+09:00",
+  "last_updated": "2025-06-02T21:23:04+09:00",
   "description": "プレイヤーが鉱石を掘って売るブラウザシミュレーションゲーム",
   "tech_stack": {
     "backend": {
@@ -61,8 +61,8 @@
       "description": "メール確認待ちの仮登録ユーザー情報を管理"
     },
     "Town": {
-      "fields": ["ID", "Name", "Description", "CreatedAt", "UpdatedAt"],
-      "description": "町の情報を管理"
+      "fields": ["ID", "Name", "Description", "PositionX", "PositionY", "CreatedAt", "UpdatedAt"],
+      "description": "町の情報とマップ上の座標を管理"
     },
     "Ore": {
       "fields": ["ID", "Name", "Rarity", "Purity", "ProcessingDifficulty", "CreatedAt", "UpdatedAt"],

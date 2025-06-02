@@ -38,15 +38,14 @@ CREATE TABLE towns (
   id VARCHAR(36) PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   description TEXT,
-  population INT NOT NULL,
-  prosperity INT NOT NULL,
-  security INT NOT NULL,
-  x_coord INT NOT NULL,
-  y_coord INT NOT NULL,
+  position_x INT NOT NULL,
+  position_y INT NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 ```
+
+**注**: position_xとposition_yはワールドマップ上の座標を表し、各町の位置を特定するために使用されます。
 
 #### ores テーブル
 
