@@ -215,6 +215,7 @@ func runSimpleServer() {
 	handlers.InitHandlers()       // 認証ハンドラー初期化
 	handlers.InitGameHandlers()   // ゲームハンドラー初期化
 	handlers.InitAdminHandlers()  // 管理者ハンドラー初期化
+	handlers.InitInventoryHandlers(db) // 在庫ハンドラー初期化
 	
 	// ユーザーリポジトリの作成 - こちらは/api/usersエンドポイント専用
 	userRepo := NewUserRepository(db)
@@ -264,6 +265,7 @@ func runSimpleServer() {
 		secured := game.Group("/")
 		secured.Use(handlers.AuthMiddleware())
 		{
+			secured.GET("/my/inventory", handlers.GetMyInventory)
 			// 今後ここに認証が必要なゲームエンドポイントを追加
 		}
 	}

@@ -195,6 +195,66 @@ Authorization: Bearer <jwt_token>
 }
 ```
 
+#### プレイヤー在庫情報取得
+
+ログインしているプレイヤーの在庫情報（所持金、鉱石、アイテム）をまとめて取得します。
+
+- **URL**: `/api/game/my/inventory`
+- **Method**: `GET`
+- **認証**: 必要
+- **レスポンス**:
+
+```json
+{
+  "inventory": {
+    "id": "inv-user-123",
+    "user_id": "user-123",
+    "gold": 1000,
+    "max_capacity": 500,
+    "current_capacity": 120,
+    "created_at": "2023-01-10T10:00:00Z",
+    "updated_at": "2023-01-10T10:00:00Z"
+  },
+  "ores": [
+    {
+      "id": "player-ore-1",
+      "user_id": "user-123",
+      "ore_id": "ore-1",
+      "quantity": 50,
+      "created_at": "2023-01-10T10:00:00Z",
+      "updated_at": "2023-01-10T10:00:00Z",
+      "ore": {
+        "id": "ore-1",
+        "name": "鉄鉱石",
+        "rarity": 1,
+        "purity": 60,
+        "processing_difficulty": 20,
+        "created_at": "2023-01-01T00:00:00Z",
+        "updated_at": "2023-01-01T00:00:00Z"
+      }
+    }
+  ],
+  "items": [
+    {
+      "id": "player-item-1",
+      "user_id": "user-123",
+      "item_id": "item-1",
+      "quantity": 5,
+      "created_at": "2023-01-10T10:00:00Z",
+      "updated_at": "2023-01-10T10:00:00Z",
+      "item": {
+        "id": "item-1",
+        "name": "ピッケル",
+        "rarity": 2,
+        "description": "頑丈なピッケル。",
+        "created_at": "2023-01-01T00:00:00Z",
+        "updated_at": "2023-01-01T00:00:00Z"
+      }
+    }
+  ]
+}
+```
+
 #### 鉱石の一覧取得
 
 ゲーム内の鉱石の一覧を取得します。

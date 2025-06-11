@@ -288,27 +288,13 @@
           "ore": "Ore object"
         }
       },
-      "/api/game/inventory": {
+      "/api/game/my/inventory": {
         "method": "GET",
-        "description": "プレイヤーの所持金と在庫情報取得",
+        "description": "プレイヤーの在庫情報（所持金、鉱石、アイテム）をまとめて取得",
         "auth_required": true,
         "response": {
-          "inventory": "PlayerInventory object"
-        }
-      },
-      "/api/game/player-ores": {
-        "method": "GET",
-        "description": "プレイヤーが所持している鉱石一覧取得",
-        "auth_required": true,
-        "response": {
-          "ores": "Array of PlayerOre objects with related Ore details"
-        }
-      },
-      "/api/game/player-items": {
-        "method": "GET",
-        "description": "プレイヤーが所持しているアイテム一覧取得",
-        "auth_required": true,
-        "response": {
+          "inventory": "PlayerInventory object",
+          "ores": "Array of PlayerOre objects with related Ore details",
           "items": "Array of PlayerItem objects with related Item details"
         }
       }
@@ -328,7 +314,7 @@
     "town_management": "完了",
     "ore_management": "完了",
     "redis_cache": "完了",
-    "player_inventory": "進行中",
+    "player_inventory": "完了",
     "mining_mechanics": "未実装",
     "frontend_integration": "進行中"
   },

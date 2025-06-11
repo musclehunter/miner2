@@ -28,13 +28,11 @@
 ### 実装済みAPI
 - ✅ 認証API（ログイン・登録）
 - ✅ 町情報取得API
+- ✅ 鉱石情報API
+- ✅ プレイヤー在庫情報取得API (`/api/game/my/inventory`)
 
 ### 進行中の実装
 - 🔄 拠点管理API
-- 🔄 鉱石情報API
-- 🔄 プレイヤー所持金・在庫API (`/api/game/inventory`)
-- 🔄 プレイヤー所持鉱石API (`/api/game/player-ores`)
-- 🔄 プレイヤー所持アイテムAPI (`/api/game/player-items`)
 
 ### 未実装
 - ❌ 取引API
@@ -48,16 +46,20 @@
 - ✅ 町テーブル（座標情報を含む）
 - ✅ 鉱石テーブル (定義を更新)
 - ✅ アイテムテーブル (新規追加)
+- ✅ プレイヤーインベントリテーブル (`player_inventories`)
+- ✅ プレイヤー所持鉱石テーブル (`player_ores`)
+- ✅ プレイヤー所持アイテムテーブル (`player_items`)
 
 ### 進行中のテーブル実装
-- 🔄 プレイヤーインベントリテーブル (`player_inventories`)
-- 🔄 プレイヤー所持鉱石テーブル (`player_ores`)
-- 🔄 プレイヤー所持アイテムテーブル (`player_items`)
 - 🔄 労働者テーブル
 
 ## 最近の更新
 
 ### 2025-06-11
+- **プレイヤー在庫システムのバックエンド実装完了**
+  - モデル、リポジトリ、ハンドラーを`database/sql`ベースで実装完了
+  - GORMへの依存を排除
+  - 認証済みユーザーの在庫情報をまとめて取得するAPIエンドポイント `GET /api/game/my/inventory` を実装
 - プレイヤーのインベントリシステム実装開始
   - データベース設計更新:
     - `items`テーブルを新規設計
@@ -75,22 +77,20 @@
 ## プレイヤー在庫システム - バックエンド実装タスク
 
 ### 1. モデル定義 (Go structs in `backend/models/`)
-- [ ] `player_inventory.go` (for `PlayerInventory` model)
-- [ ] `player_ore.go` (for `PlayerOre` model)
-- [ ] `player_item.go` (for `PlayerItem` model)
+- [x] `player_inventory.go` (for `PlayerInventory` model)
+- [x] `player_ore.go` (for `PlayerOre` model)
+- [x] `player_item.go` (for `PlayerItem` model)
 
 ### 2. データベースリポジトリ実装 (CRUD operations in `backend/database/`)
-- [ ] `player_inventory_repository.go`
-- [ ] `player_ore_repository.go`
-- [ ] `player_item_repository.go`
+- [x] `player_inventory_repository.go`
+- [x] `player_ore_repository.go`
+- [x] `player_item_repository.go`
 
-### 3. APIハンドラー実装 (in `backend/handlers/game.go` or similar)
-- [ ] Handler for `/api/game/inventory` (Get PlayerInventory)
-- [ ] Handler for `/api/game/player-ores` (Get PlayerOres)
-- [ ] Handler for `/api/game/player-items` (Get PlayerItems)
+### 3. APIハンドラー実装 (in `backend/handlers/`)
+- [x] `inventory_handler.go`を作成し、`GetMyInventory`ハンドラーを実装
 
 ### 4. APIルーティング (in Gin router setup)
-- [ ] Register routes for `/api/game/inventory`, `/api/game/player-ores`, `/api/game/player-items`
+- [x] `/api/game/my/inventory` のルートを登録し、認証ミドルウェアを適用
 
 ## プレイヤー在庫システム - フロントエンド実装タスク
 
