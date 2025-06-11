@@ -50,11 +50,19 @@ func InitHandlers() {
 		baseURL = "http://localhost:8080"
 	}
 	
-	log.Println("認証ハンドラーの初期化完了: UserRepositoryとメール送信者設定済み")
+	// JWTの秘密鍵を初期化
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		log.Println("警告: 環境変数JWT_SECRETが設定されていません。安全でないデフォルトキーを使用します。")
+		secret = "your-secret-key"
+	}
+	jwtSecret = []byte(secret)
+
+	log.Println("認証ハンドラーの初期化完了: UserRepository、メール送信者、JWTシークレット設定済み")
 }
 
-// JWTの秘密鍵（本番環境では環境変数から取得するべき）
-var jwtSecret = []byte("your-secret-key")
+// JWTの秘密鍵
+var jwtSecret []byte
 
 // サインアップリクエスト
 type SignupRequest struct {

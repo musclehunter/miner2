@@ -6,6 +6,33 @@ import (
 )
 
 // MigrateTownCoordinates はtownsテーブルに座標カラムを追加し、既存データを更新します
+// CreatePlayerBasesTable は player_bases テーブルを作成します
+func CreatePlayerBasesTable(db *sql.DB) error {
+	log.Println("player_bases テーブルのマイグレーションを開始します...")
+
+	query := `
+	CREATE TABLE IF NOT EXISTS player_bases (
+		id VARCHAR(255) PRIMARY KEY,
+		user_id VARCHAR(255) NOT NULL,
+		town_id VARCHAR(255) NOT NULL,
+		level INT NOT NULL DEFAULT 1,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+		FOREIGN KEY (town_id) REFERENCES towns(id) ON DELETE CASCADE
+	);
+	`
+
+	_, err := db.Exec(query)
+	if err != nil {
+		log.Printf("player_bases テーブルの作成に失敗しました: %v", err)
+		return err
+	}
+
+	log.Println("player_bases テーブルのマイグレーションが完了しました")
+	return nil
+}
+
 func MigrateTownCoordinates(db *sql.DB) error {
 	log.Println("町の座標情報マイグレーションを開始します...")
 	

@@ -306,6 +306,36 @@ Authorization: Bearer <jwt_token>
 
 ### 管理者関連 API
 
+#### 全ての拠点情報取得
+
+システムに登録されている全てのプレイヤー拠点情報を取得します。
+
+- **URL**: `/api/admin/bases`
+- **Method**: `GET`
+- **認証**: 必要 (管理者)
+- **レスポンス**:
+
+```json
+[
+  {
+    "id": "b8e1b4e6-3e4f-4d2a-8c1a-9b8e1b4e63e4",
+    "user_id": "u1",
+    "town_id": "t1",
+    "level": 1,
+    "created_at": "2025-06-12T00:36:06Z",
+    "updated_at": "2025-06-12T00:36:06Z"
+  },
+  {
+    "id": "c9f2c5f7-4f5g-5e3b-9d2b-1c9f2c5f74f5",
+    "user_id": "u2",
+    "town_id": "t2",
+    "level": 2,
+    "created_at": "2025-06-12T01:00:00Z",
+    "updated_at": "2025-06-12T01:30:00Z"
+  }
+]
+```
+
 #### 管理者ログイン
 
 管理者としてログインします。
@@ -478,6 +508,76 @@ Authorization: Bearer <jwt_token>
   "message": "未確認ユーザーが削除されました。"
 }
 ```
+
+### 町管理
+
+#### 町一覧取得
+
+全ての町の情報を取得します（管理者のみ）。
+
+- **URL**: `/api/admin/towns`
+- **Method**: `GET`
+- **認証**: 必要（管理者権限）
+- **レスポンス**: `Array of Town objects`
+
+#### 新規町作成
+
+新しい町を作成します（管理者のみ）。
+
+- **URL**: `/api/admin/towns`
+- **Method**: `POST`
+- **認証**: 必要（管理者権限）
+- **リクエスト**: 
+
+```json
+{
+    "name": "新しい町",
+    "description": "説明文"
+}
+```
+
+- **レスポンス**: `Town object`
+
+#### 町情報更新
+
+- **URL**: `/api/admin/towns/:id`
+- **Method**: `PUT`
+- **認証**: 必要（管理者権限）
+- **リクエスト**: 
+
+```json
+{
+    "name": "更新された町名",
+    "description": "更新された説明文"
+}
+```
+
+- **レスポンス**: `Town object`
+
+#### 町削除
+
+- **URL**: `/api/admin/towns/:id`
+- **Method**: `DELETE`
+- **認証**: 必要（管理者権限）
+- **レスポンス**: 
+
+```json
+{
+  "message": "町を削除しました。"
+}
+```
+
+### 拠点管理
+
+#### 拠点一覧取得
+
+全てのプレイヤー拠点情報を取得します（管理者のみ）。
+
+- **URL**: `/api/admin/bases`
+- **Method**: `GET`
+- **認証**: 必要（管理者権限）
+- **レスポンス**: `Array of PlayerBase objects`
+
 
 ## エラーレスポンス
 

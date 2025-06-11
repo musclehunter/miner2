@@ -50,6 +50,13 @@ func InitDB() error {
 		}
 
 		log.Println("データベース接続に成功しました")
+
+		// マイグレーションを実行
+		log.Println("データベースマイグレーションを実行します...")
+		if err := CreatePlayerBasesTable(DB); err != nil {
+			return fmt.Errorf("player_basesテーブルのマイグレーションに失敗しました: %v", err)
+		}
+
 		return nil
 	}
 

@@ -76,21 +76,27 @@
     <div v-if="showEstablishModal" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
       <div class="card max-w-md w-full">
         <h3 class="text-xl font-bold text-light mb-4">拠点設立の確認</h3>
-        <p class="text-light-dark mb-6">{{ selectedTown.name }}に拠点を設立します。よろしいですか？</p>
+        <p v-if="selectedTown" class="text-light-dark mb-6">
+          <span class="font-bold text-primary">{{ selectedTown.name }}</span> に拠点を設立します。よろしいですか？
+        </p>
         <p class="text-sm text-light-dark mb-6">※一度設立すると変更できません</p>
+        <p v-if="creationError" class="text-danger text-sm mb-4">{{ creationError }}</p>
         
         <div class="flex justify-end gap-3">
           <button 
             class="btn bg-dark-light text-light hover:bg-dark-light/80" 
             @click="showEstablishModal = false"
+            :disabled="isCreatingBase"
           >
             キャンセル
           </button>
           <button 
             class="btn btn-primary" 
             @click="confirmEstablishBase"
+            :disabled="isCreatingBase"
           >
-            設立する
+            <span v-if="isCreatingBase">設立中...</span>
+            <span v-else>設立する</span>
           </button>
         </div>
       </div>
@@ -100,6 +106,7 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue';
+import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import TownDetail from '@/components/world/TownDetail.vue';
 import { towns, getTownById } from '@/data/towns';
@@ -111,10 +118,14 @@ export default {
   },
   setup() {
     const router = useRouter();
+    const store = useStore();
     const selectedTownId = ref(null);
     const showEstablishModal = ref(false);
     const mapContainer = ref(null);
     const mapScale = ref(1); // 地図のスケール係数（実際の画像サイズと表示サイズの比率）
+
+    const isCreatingBase = ref(false);
+    const creationError = ref(null);
 
     // 選択中の町の情報
     const selectedTown = computed(() => {
@@ -193,18 +204,29 @@ export default {
 
     // 拠点設立ダイアログ表示
     const establishBase = (townId) => {
-      selectedTownId.value = townId;
+      selectTown(townId);
+      creationError.value = null;
       showEstablishModal.value = true;
     };
 
     // 拠点設立を確定
-    const confirmEstablishBase = () => {
-      // TODO: APIと連携して拠点を設立する
-      // ここではモック処理として遷移だけ行う
-      showEstablishModal.value = false;
-      
-      // 拠点画面に遷移
-      router.push('/base');
+    const confirmEstablishBase = async () => {
+      isCreatingBase.value = true;
+      creationError.value = null;
+
+      try {
+        await store.dispatch('base/createBase', {
+          townId: selectedTownId.value,
+        });
+        
+        showEstablishModal.value = false;
+        router.push('/base'); // 拠点画面へ遷移
+
+      } catch (error) {
+        creationError.value = store.getters['base/error'] || '拠点設立中に不明なエラーが発生しました。';
+      } finally {
+        isCreatingBase.value = false;
+      }
     };
 
     return {
@@ -217,10 +239,12 @@ export default {
       handleMapClick,
       selectTown,
       establishBase,
-      confirmEstablishBase
+      confirmEstablishBase,
+      isCreatingBase,
+      creationError,
     };
-  }
-}
+  },
+};
 </script>
 
 <style scoped>

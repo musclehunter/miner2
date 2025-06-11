@@ -51,7 +51,11 @@
           
           <!-- 管理者メニュー（管理者認証時のみ表示） -->
           <template v-if="isAdmin">
-            <div class="relative group">
+            <div 
+              class="relative"
+              @mouseenter="openMenu"
+              @mouseleave="closeMenu"
+            >
               <button class="nav-link flex items-center">
                 <span class="hidden md:inline">管理者</span>
                 <span class="md:hidden">👑</span>
@@ -59,7 +63,11 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              <div class="absolute right-0 mt-2 w-48 bg-dark-lighter border border-dark-light rounded shadow-lg hidden group-hover:block z-10">
+              <div 
+                :class="['absolute right-0 mt-2 w-48 bg-dark-lighter border border-dark-light rounded shadow-lg z-10', { 'block': isAdminMenuOpen, 'hidden': !isAdminMenuOpen }]"
+                @mouseenter="openMenu"
+                @mouseleave="closeMenu"
+              >
                 <router-link to="/admin" class="block px-4 py-2 text-sm text-light hover:bg-dark-light">
                   ダッシュボード
                 </router-link>
@@ -72,6 +80,9 @@
                 <router-link to="/admin/towns" class="block px-4 py-2 text-sm text-light hover:bg-dark-light">
                   町管理
                 </router-link>
+                <router-link to="/admin/bases" class="block px-4 py-2 text-sm text-light hover:bg-dark-light">
+                  拠点管理
+                </router-link>
               </div>
             </div>
           </template>
@@ -82,7 +93,7 @@
 </template>
 
 <script>
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 
@@ -91,6 +102,19 @@ export default {
   setup() {
     const store = useStore();
     const router = useRouter();
+    const isAdminMenuOpen = ref(false);
+    let menuTimeout = null;
+
+    const openMenu = () => {
+      clearTimeout(menuTimeout);
+      isAdminMenuOpen.value = true;
+    };
+
+    const closeMenu = () => {
+      menuTimeout = setTimeout(() => {
+        isAdminMenuOpen.value = false;
+      }, 200);
+    };
     
     // 認証状態を取得
     const isAuthenticated = computed(() => {
@@ -128,7 +152,10 @@ export default {
     return {
       isAuthenticated,
       isAdmin,
-      logout
+      logout,
+      isAdminMenuOpen,
+      openMenu,
+      closeMenu,
     };
   }
 }

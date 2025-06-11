@@ -13,7 +13,7 @@
       <main>
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
           <div class="px-4 py-8 sm:px-0">
-            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
               <!-- ユーザー管理カード -->
               <div class="bg-white overflow-hidden shadow rounded-lg">
                 <div class="p-5">
@@ -109,6 +109,38 @@
                   </div>
                 </div>
               </div>
+
+              <!-- 拠点管理カード -->
+              <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                  <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-purple-500 rounded-md p-3">
+                      <svg class="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                      </svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                      <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">
+                          拠点管理
+                        </dt>
+                        <dd>
+                          <div class="text-lg font-medium text-gray-900">
+                            {{ baseStats.total }} 拠点
+                          </div>
+                        </dd>
+                      </dl>
+                    </div>
+                  </div>
+                </div>
+                <div class="bg-gray-50 px-5 py-3">
+                  <div class="text-sm">
+                    <router-link :to="{ name: 'adminBases' }" class="font-medium text-indigo-600 hover:text-indigo-900">
+                      拠点管理へ
+                    </router-link>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -131,6 +163,7 @@ export default {
     const userStats = ref({ total: 0 })
     const pendingUserStats = ref({ total: 0 })
     const townStats = ref({ total: 0 })
+    const baseStats = ref({ total: 0 })
     const loading = ref(true)
     const error = ref('')
 
@@ -139,17 +172,19 @@ export default {
       error.value = ''
       
       try {
-        // ユーザー数を取得
-        const users = await adminService.getAllUsers()
+        // APIリクエストを並列で実行
+        const [users, pendingUsers, towns, basesResponse] = await Promise.all([
+          adminService.getAllUsers(),
+          adminService.getAllPendingUsers(),
+          adminService.getAllTowns(),
+          adminService.getAllBases()
+        ]);
+
         userStats.value.total = users.length
-        
-        // 未確認ユーザー数を取得
-        const pendingUsers = await adminService.getAllPendingUsers()
         pendingUserStats.value.total = pendingUsers.length
-        
-        // 町の数を取得
-        const towns = await adminService.getAllTowns()
         townStats.value.total = towns.length
+        baseStats.value.total = basesResponse.data.length
+
       } catch (err) {
         console.error('ダッシュボードデータ取得エラー:', err)
         error.value = 'データの取得に失敗しました'
@@ -167,6 +202,7 @@ export default {
       userStats,
       pendingUserStats,
       townStats,
+      baseStats,
       loading,
       error
     }

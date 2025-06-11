@@ -12,9 +12,10 @@
 - ✅ メインダッシュボード
 - ✅ ワールドマップ（座標ベースの町選択機能付き）
 - ✅ 町詳細画面
+- ✅ 拠点画面
 
 ### 進行中の実装
-- 🔄 インベントリ管理画面
+- ✅ 拠点設立機能
 - 🔄 鉱山掘削画面
 - 🔄 労働者管理画面
 
@@ -30,9 +31,10 @@
 - ✅ 町情報取得API
 - ✅ 鉱石情報API
 - ✅ プレイヤー在庫情報取得API (`/api/game/my/inventory`)
+- ✅ 管理者向け拠点情報取得API (`/api/admin/bases`)
 
 ### 進行中の実装
-- 🔄 拠点管理API
+- ✅ 拠点設立API
 
 ### 未実装
 - ❌ 取引API
@@ -49,6 +51,7 @@
 - ✅ プレイヤーインベントリテーブル (`player_inventories`)
 - ✅ プレイヤー所持鉱石テーブル (`player_ores`)
 - ✅ プレイヤー所持アイテムテーブル (`player_items`)
+- ✅ プレイヤー拠点テーブル (`player_bases`)
 
 ### 進行中のテーブル実装
 - 🔄 労働者テーブル
@@ -107,6 +110,42 @@
 
 ### 4. 拠点画面への統合 (e.g., `BaseScreen.vue`)
 - [x] 上記で作成したコンポーネントを拠点画面 (`frontend/src/views/BaseView.vue`) に配置し、APIから取得したデータを表示。
+
+## 拠点設立システム - 実装タスク
+
+### バックエンド実装タスク
+
+1.  **モデル定義 (in `backend/models/`)**
+    - [x] `player_base.go` (for `PlayerBase` model) - `database.md`を参考に既存定義を確認し、必要に応じて修正。
+
+2.  **データベースリポジトリ実装 (in `backend/database/`)**
+    - [x] `player_base_repository.go` を作成し、拠点を新規作成する `CreatePlayerBase` 関数を実装。この関数はトランザクション内で `player_inventories` テーブルにも初期レコードを作成する。
+
+3.  **APIハンドラー実装 (in `backend/handlers/`)**
+    - [x] `base_handler.go` を作成し、`CreateBase` ハンドラーを実装。リクエストから町IDを受け取り、リポジトリを呼び出す。
+
+4.  **APIルーティング (in Gin router setup)**
+    - [x] `POST /api/game/bases` のルートを登録し、認証ミドルウェアを適用。
+
+### フロントエンド実装タスク
+
+1.  **APIサービス更新 (in `frontend/src/services/`)**
+    - [x] `baseService.js` を新規作成し、`POST /api/game/bases` を呼び出す `createBase` 関数を追加。
+
+2.  **Vuexストア更新 (in `frontend/src/store/`)**
+    - [x] プレイヤーの拠点情報を管理するための `base` モジュールを `modules` に追加。拠点の作成、取得に関する state, actions を定義。
+
+3.  **UIコンポーネント/ビュー更新**
+    - [x] `WorldMapView.vue` を改修。町を選択した際に、プレイヤーがまだその町に拠点を持っていない場合、拠点設立の確認モーダルと「設立」ボタンを表示する。
+    - [x] 拠点設立の確認モーダルで「設立」ボタンクリック時に `createBase` アクションをディスパッチする。
+    - [x] 拠点設立成功後、ユーザーに通知し、拠点画面へ遷移させる。
+
+## 管理機能
+
+- ✅ ユーザー管理
+- ✅ 未確認ユーザー管理
+- ✅ 町管理
+- ✅ 拠点管理
 
 ### 2025-06-02
 - ワールドマップ画面の刷新

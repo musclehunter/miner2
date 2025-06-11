@@ -188,6 +188,18 @@ const deleteTown = async (townId) => {
   }
 }
 
+// 全拠点取得
+const getAllBases = async () => {
+  try {
+    const client = createAuthenticatedClient()
+    const response = await client.get('/api/admin/bases')
+    return response
+  } catch (error) {
+    console.error('拠点一覧取得エラー:', error.response ? error.response.data : error.message)
+    throw error
+  }
+}
+
 export default {
   login,
   getAllUsers,
@@ -200,5 +212,6 @@ export default {
   getAllTowns,
   createTown,
   updateTown,
-  deleteTown
+  deleteTown,
+  getAllBases
 }

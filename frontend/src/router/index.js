@@ -86,6 +86,12 @@ const routes = [
     name: 'adminTowns',
     component: () => import(/* webpackChunkName: "admin-towns" */ '../views/admin/AdminTownsView.vue'),
     meta: { requiresAdmin: true }
+  },
+  {
+    path: '/admin/bases',
+    name: 'adminBases',
+    component: () => import(/* webpackChunkName: "admin-bases" */ '../views/admin/AdminBases.vue'),
+    meta: { requiresAdmin: true }
   }
 ]
 

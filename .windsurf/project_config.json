@@ -87,6 +87,10 @@
     "PlayerItem": {
       "fields": ["ID", "UserID", "ItemID", "Quantity", "UpdatedAt"],
       "description": "プレイヤーが所持するアイテムの数量を管理"
+    },
+    "PlayerBase": {
+      "fields": ["ID", "UserID", "TownID", "Level", "CreatedAt", "UpdatedAt"],
+      "description": "プレイヤーの拠点情報を管理"
     }
   },
   "api_endpoints": {
@@ -256,6 +260,15 @@
         "admin_required": true,
         "response": {
           "message": "string"
+        }
+      },
+      "/api/admin/bases": {
+        "method": "GET",
+        "description": "全拠点情報取得",
+        "auth_required": true,
+        "admin_required": true,
+        "response": {
+          "bases": "Array of PlayerBase objects"
         }
       }
     },

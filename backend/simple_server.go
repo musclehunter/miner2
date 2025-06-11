@@ -198,6 +198,12 @@ func runSimpleServer() {
 	// データベースをグローバル変数に設定してhandlersから使用可能にする
 	database.DB = db
 
+	// マイグレーションを実行
+	log.Println("データベースマイグレーションを実行します...")
+	if err := database.CreatePlayerBasesTable(db); err != nil {
+		log.Fatalf("player_basesテーブルのマイグレーションに失敗しました: %v", err)
+	}
+
 	// Redisキャッシュを初期化
 	log.Println("Redisキャッシュを初期化しています...")
 	cache.InitRedisClient()
@@ -266,6 +272,7 @@ func runSimpleServer() {
 		secured.Use(handlers.AuthMiddleware())
 		{
 			secured.GET("/my/inventory", handlers.GetMyInventory)
+			secured.POST("/bases", handlers.CreateBase)
 			// 今後ここに認証が必要なゲームエンドポイントを追加
 		}
 	}
@@ -282,16 +289,19 @@ func runSimpleServer() {
 		admin.GET("/users/:id", handlers.GetUserDetail)
 		admin.PUT("/users/:id", handlers.UpdateUser)
 		admin.DELETE("/users/:id", handlers.DeleteUser)
-		
+
 		// 未確認ユーザー管理
 		admin.GET("/pending-users", handlers.GetAllPendingUsers)
 		admin.DELETE("/pending-users/:token", handlers.DeletePendingUser)
-		
+
 		// 町管理
 		admin.GET("/towns", handlers.GetAllTownsAdmin)
 		admin.POST("/towns", handlers.CreateTown)
 		admin.PUT("/towns/:id", handlers.UpdateTown)
 		admin.DELETE("/towns/:id", handlers.DeleteTown)
+
+		// 拠点管理
+		admin.GET("/bases", handlers.GetAllBasesHandler)
 	}
 
 	// サーバー起動

@@ -39,6 +39,14 @@
               >
                 町管理
               </router-link>
+
+              <router-link 
+                :to="{ name: 'adminBases' }" 
+                class="text-white hover:bg-indigo-500 hover:bg-opacity-75 px-3 py-2 rounded-md text-sm font-medium" 
+                :class="{ 'bg-indigo-700': isActive('adminBases') }"
+              >
+                拠点管理
+              </router-link>
             </div>
           </div>
         </div>
@@ -104,6 +112,14 @@
           :class="{ 'bg-indigo-700': isActive('adminTowns') }"
         >
           町管理
+        </router-link>
+
+        <router-link 
+          :to="{ name: 'adminBases' }" 
+          class="text-white hover:bg-indigo-500 hover:bg-opacity-75 block px-3 py-2 rounded-md text-base font-medium" 
+          :class="{ 'bg-indigo-700': isActive('adminBases') }"
+        >
+          拠点管理
         </router-link>
 
         <button 
