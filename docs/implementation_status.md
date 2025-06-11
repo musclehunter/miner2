@@ -95,18 +95,18 @@
 ## プレイヤー在庫システム - フロントエンド実装タスク
 
 ### 1. APIサービス更新 (in `frontend/src/services/`)
-- [ ] `api.js` (または新規ファイル) に、`/api/game/inventory`, `/api/game/player-ores`, `/api/game/player-items` を呼び出す関数を追加。
+- [x] `frontend/src/services/inventoryService.js` を作成し、`/api/game/my/inventory` を呼び出す関数を追加。
 
 ### 2. Vuexストア更新 (in `frontend/src/store/`)
-- [ ] プレイヤーの所持金、鉱石リスト、アイテムリストを管理するためのstate, getters, mutations, actionsを追加。
+- [x] プレイヤーの所持金、鉱石リスト、アイテムリストを管理するためのVuexモジュール (`frontend/src/store/modules/inventory.js`) を作成し、state, getters, mutations, actionsを追加。
 
 ### 3. UIコンポーネント作成 (in `frontend/src/components/` or `frontend/src/views/`)
-- [ ] プレイヤー所持金表示用コンポーネント (`PlayerGoldDisplay.vue` など)
-- [ ] プレイヤー所持鉱石リスト表示用コンポーネント (`PlayerOreList.vue` など)
-- [ ] プレイヤー所持アイテムリスト表示用コンポーネント (`PlayerItemList.vue` など)
+- [x] プレイヤー所持金表示用コンポーネント (`frontend/src/components/inventory/PlayerGoldDisplay.vue`) を作成。
+- [x] プレイヤー所持鉱石リスト表示用コンポーネント (`frontend/src/components/inventory/PlayerOreList.vue`) を作成。
+- [x] プレイヤー所持アイテムリスト表示用コンポーネント (`frontend/src/components/inventory/PlayerItemList.vue`) を作成。
 
 ### 4. 拠点画面への統合 (e.g., `BaseScreen.vue`)
-- [ ] 上記で作成したコンポーネントを拠点画面に配置し、APIから取得したデータを表示。
+- [x] 上記で作成したコンポーネントを拠点画面 (`frontend/src/views/BaseView.vue`) に配置し、APIから取得したデータを表示。
 
 ### 2025-06-02
 - ワールドマップ画面の刷新

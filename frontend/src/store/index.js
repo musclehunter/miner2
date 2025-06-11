@@ -1,5 +1,6 @@
 import { createStore } from 'vuex'
 import authService from '@/services/auth'
+import inventory from './modules/inventory'
 
 export default createStore({
   state: {
@@ -138,6 +139,6 @@ export default createStore({
     }
   },
   modules: {
-    // 必要に応じて機能ごとにモジュール化
+    inventory
   }
 })
