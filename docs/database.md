@@ -55,9 +55,24 @@ CREATE TABLE towns (
 CREATE TABLE ores (
   id VARCHAR(36) PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
-  description TEXT,
-  base_value INT NOT NULL,
   rarity INT NOT NULL,
+  purity FLOAT,
+  processing_difficulty INT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+#### items テーブル
+
+ゲーム内のアイテムデータを管理します。
+
+```sql
+CREATE TABLE items (
+  id VARCHAR(36) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  rarity INT NOT NULL,
+  description TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -81,29 +96,66 @@ CREATE TABLE player_bases (
 );
 ```
 
-#### inventories テーブル
+#### player_inventories テーブル
 
-プレイヤーのインベントリ（所持品）を管理します。
+プレイヤーの所持金と在庫容量を管理します。
 
 ```sql
-CREATE TABLE inventories (
+CREATE TABLE player_inventories (
   id VARCHAR(36) PRIMARY KEY,
-  player_base_id VARCHAR(36) NOT NULL,
+  user_id VARCHAR(36) NOT NULL,
+  gold INT NOT NULL DEFAULT 0,
+  max_capacity INT NOT NULL DEFAULT 100,
+  current_capacity INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+```
+
+#### player_ores テーブル
+
+プレイヤーが所持している鉱石の数量を管理します。
+
+```sql
+CREATE TABLE player_ores (
+  id VARCHAR(36) PRIMARY KEY,
+  user_id VARCHAR(36) NOT NULL,
   ore_id VARCHAR(36) NOT NULL,
   quantity INT NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (player_base_id) REFERENCES player_bases(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (ore_id) REFERENCES ores(id) ON DELETE CASCADE
+);
+```
+
+#### player_items テーブル
+
+プレイヤーが所持しているアイテムの数量を管理します。
+
+```sql
+CREATE TABLE player_items (
+  id VARCHAR(36) PRIMARY KEY,
+  user_id VARCHAR(36) NOT NULL,
+  item_id VARCHAR(36) NOT NULL,
+  quantity INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
 );
 ```
 
 ### リレーションシップ
 
-- ユーザー (1) -> (N) 拠点
-- 町 (1) -> (N) 拠点
-- 拠点 (1) -> (N) インベントリ
-- 鉱石 (1) -> (N) インベントリ
+- ユーザー (1) -> (N) 拠点 (`player_bases`)
+- 町 (1) -> (N) 拠点 (`player_bases`)
+- ユーザー (1) -> (1) プレイヤーインベントリ (`player_inventories`)
+- ユーザー (1) -> (N) プレイヤー所持鉱石 (`player_ores`)
+- 鉱石 (1) -> (N) プレイヤー所持鉱石 (`player_ores`)
+- ユーザー (1) -> (N) プレイヤー所持アイテム (`player_items`)
+- アイテム (1) -> (N) プレイヤー所持アイテム (`player_items`)
 
 ## Redis データストア
 
@@ -159,4 +211,3 @@ docker-compose exec db mysqldump -u miner -p minerdb > backup.sql
 
 ```bash
 cat backup.sql | docker-compose exec -T db mysql -u miner -p minerdb
-```

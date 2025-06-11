@@ -1,7 +1,7 @@
 {
   "project_name": "採掘人 (Miner Game)",
   "version": "0.1.0",
-  "last_updated": "2025-06-02T21:23:04+09:00",
+  "last_updated": "2025-06-11T22:55:00+09:00",
   "description": "プレイヤーが鉱石を掘って売るブラウザシミュレーションゲーム",
   "tech_stack": {
     "backend": {
@@ -75,6 +75,18 @@
     "Worker": {
       "fields": ["ID", "Level", "Name", "Strength", "Stamina", "Agility", "Intelligence", "Luck"],
       "description": "労働者（キャラクター）の情報を管理"
+    },
+    "PlayerInventory": {
+      "fields": ["ID", "UserID", "Gold", "MaxCapacity", "CurrentCapacity", "UpdatedAt"],
+      "description": "プレイヤーの所持金と在庫容量を管理"
+    },
+    "PlayerOre": {
+      "fields": ["ID", "UserID", "OreID", "Quantity", "UpdatedAt"],
+      "description": "プレイヤーが所持する鉱石の数量を管理"
+    },
+    "PlayerItem": {
+      "fields": ["ID", "UserID", "ItemID", "Quantity", "UpdatedAt"],
+      "description": "プレイヤーが所持するアイテムの数量を管理"
     }
   },
   "api_endpoints": {
@@ -275,6 +287,30 @@
         "response": {
           "ore": "Ore object"
         }
+      },
+      "/api/game/inventory": {
+        "method": "GET",
+        "description": "プレイヤーの所持金と在庫情報取得",
+        "auth_required": true,
+        "response": {
+          "inventory": "PlayerInventory object"
+        }
+      },
+      "/api/game/player-ores": {
+        "method": "GET",
+        "description": "プレイヤーが所持している鉱石一覧取得",
+        "auth_required": true,
+        "response": {
+          "ores": "Array of PlayerOre objects with related Ore details"
+        }
+      },
+      "/api/game/player-items": {
+        "method": "GET",
+        "description": "プレイヤーが所持しているアイテム一覧取得",
+        "auth_required": true,
+        "response": {
+          "items": "Array of PlayerItem objects with related Item details"
+        }
       }
     }
   },
@@ -292,12 +328,11 @@
     "town_management": "完了",
     "ore_management": "完了",
     "redis_cache": "完了",
-    "player_inventory": "未実装",
+    "player_inventory": "進行中",
     "mining_mechanics": "未実装",
     "frontend_integration": "進行中"
   },
   "future_tasks": [
-    "プレイヤーの所持金や鉱石在庫などの管理機能の実装",
     "採掘メカニズムの実装",
     "町ごとに異なる鉱石の出現率や特性の設定",
     "採掘の成功率や採掘量の計算ロジックの実装",
@@ -309,7 +344,11 @@
       "/backend/models/user.go",
       "/backend/models/town.go",
       "/backend/models/ore.go",
+      "/backend/models/item.go",
       "/backend/models/pending_user.go",
+      "/backend/models/player_inventory.go",
+      "/backend/models/player_ore.go",
+      "/backend/models/player_item.go",
       "/backend/handlers/auth.go",
       "/backend/handlers/game.go",
       "/backend/handlers/admin.go",
@@ -317,6 +356,10 @@
       "/backend/database/user_repository.go",
       "/backend/database/town_repository.go",
       "/backend/database/ore_repository.go",
+      "/backend/database/item_repository.go",
+      "/backend/database/player_inventory_repository.go",
+      "/backend/database/player_ore_repository.go",
+      "/backend/database/player_item_repository.go",
       "/backend/database/initial_data.go",
       "/backend/cache/redis.go",
       "/backend/mail/mail.go"
