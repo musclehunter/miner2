@@ -1,2 +1,5 @@
 # Go build output
 backend/tmp/
+
+# Compiled Go binary
+backend/go
