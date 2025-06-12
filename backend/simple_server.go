@@ -15,6 +15,10 @@ import (
 	"github.com/musclehunter/miner2/cache"
 	"github.com/musclehunter/miner2/database"
 	"github.com/musclehunter/miner2/handlers"
+
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/mysql"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 // User はユーザー情報を表す構造体
@@ -200,9 +204,25 @@ func runSimpleServer() {
 
 	// マイグレーションを実行
 	log.Println("データベースマイグレーションを実行します...")
-	if err := database.CreatePlayerBasesTable(db); err != nil {
-		log.Fatalf("player_basesテーブルのマイグレーションに失敗しました: %v", err)
+	driver, err := mysql.WithInstance(db, &mysql.Config{})
+	if err != nil {
+		log.Fatalf("データベースドライバのインスタンス化に失敗しました: %v", err)
 	}
+
+	m, err := migrate.NewWithDatabaseInstance(
+		"file://database/migrations",
+		"mysql",
+		driver,
+	)
+	if err != nil {
+		log.Fatalf("マイグレーションインスタンスの作成に失敗しました: %v", err)
+	}
+
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatalf("マイグレーションの適用に失敗しました: %v", err)
+	}
+
+	log.Println("データベースマイグレーションが正常に完了しました")
 
 	// Redisキャッシュを初期化
 	log.Println("Redisキャッシュを初期化しています...")
@@ -217,12 +237,9 @@ func runSimpleServer() {
 		log.Printf("警告: 初期鉱石データ作成エラー: %v", err)
 	}
 
-	// ハンドラー初期化 - 重要: handlers内で共有されるUserRepositoryが初期化される
-	handlers.InitHandlers()       // 認証ハンドラー初期化
-	handlers.InitGameHandlers()   // ゲームハンドラー初期化
-	handlers.InitAdminHandlers()  // 管理者ハンドラー初期化
-	handlers.InitInventoryHandlers(db) // 在庫ハンドラー初期化
-	
+	// ハンドラーの初期化
+	handlers.InitHandlers(db)
+
 	// ユーザーリポジトリの作成 - こちらは/api/usersエンドポイント専用
 	userRepo := NewUserRepository(db)
 
@@ -268,11 +285,11 @@ func runSimpleServer() {
 		game.GET("/ores/:id", handlers.GetOreByID)
 		
 		// 認証が必要なエンドポイント
-		secured := game.Group("/")
-		secured.Use(handlers.AuthMiddleware())
+		gameGroup := game.Group("/")
+		gameGroup.Use(handlers.AuthMiddleware())
 		{
-			secured.GET("/my/inventory", handlers.GetMyInventory)
-			secured.POST("/bases", handlers.CreateBase)
+			gameGroup.GET("/my/inventory", handlers.GetMyInventoryHandler)
+			gameGroup.POST("/bases", handlers.CreateBase)
 			// 今後ここに認証が必要なゲームエンドポイントを追加
 		}
 	}

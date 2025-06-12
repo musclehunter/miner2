@@ -9,6 +9,8 @@ import (
 	"github.com/musclehunter/miner2/models"
 )
 
+
+
 // CreateBaseRequest は拠点作成リクエストのボディを表します。
 type CreateBaseRequest struct {
 	TownID string `json:"town_id" binding:"required"`
@@ -16,11 +18,16 @@ type CreateBaseRequest struct {
 
 // CreateBase は新しい拠点を作成するハンドラーです。
 func CreateBase(c *gin.Context) {
+	// ログ出力
+	log.Printf("CreateBase called with request body: %v", c.Request.Body)
 	var req CreateBaseRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
+
+	// ログ出力
+	log.Printf("createbase request json: %v", c)
 
 	userID, exists := c.Get("userID")
 	if !exists {
@@ -28,30 +35,44 @@ func CreateBase(c *gin.Context) {
 		return
 	}
 
-	tx, err := database.DB.Begin()
+	// ログ出力
+	log.Printf("CreateBase userID: %v", userID)
+
+	tx, err := db.Begin()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start transaction"})
 		return
 	}
 
-	newBase, err := database.CreatePlayerBase(tx, userID.(string), req.TownID)
+	// ログ出力
+	log.Printf("CreateBase database begin")
+
+	newBase, err := database.CreateBaseWithWarehouse(tx, userID.(string), req.TownID)
 	if err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create base"})
+		log.Printf("CreateBase database create base with warehouse error: %v", err)
 		return
 	}
 
+	// ログ出力
+	log.Printf("CreateBase create player base")
+
 	if err := tx.Commit(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit transaction"})
+		log.Printf("CreateBase database commit error: %v", err)
 		return
 	}
+
+	// ログ出力
+	log.Printf("CreateBase database commit")
 
 	c.JSON(http.StatusCreated, newBase)
 }
 
-// GetAllBasesHandler retrieves all player bases
+// GetAllBasesHandler retrieves all bases
 func GetAllBasesHandler(c *gin.Context) {
-	bases, err := database.GetAllPlayerBases(database.DB)
+	bases, err := database.GetAllBases(db)
 	if err != nil {
 		log.Printf("データベースからの拠点取得に失敗しました: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve bases"})
@@ -60,7 +81,7 @@ func GetAllBasesHandler(c *gin.Context) {
 
 	// 拠点が一件もない場合はnullではなく空の配列を返す
 	if len(bases) == 0 {
-		c.JSON(http.StatusOK, []*models.PlayerBase{})
+		c.JSON(http.StatusOK, []*models.Base{})
 		return
 	}
 

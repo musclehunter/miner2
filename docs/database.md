@@ -18,12 +18,10 @@
 ```sql
 CREATE TABLE users (
   id VARCHAR(36) PRIMARY KEY,
-  username VARCHAR(255) NOT NULL UNIQUE,
   email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  salt VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
-  password VARCHAR(255) NOT NULL,
-  is_admin BOOLEAN DEFAULT FALSE,
-  is_email_verified BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -78,16 +76,15 @@ CREATE TABLE items (
 );
 ```
 
-#### player_bases テーブル
+#### bases テーブル
 
 プレイヤーの拠点情報を管理します。
 
 ```sql
-CREATE TABLE player_bases (
+CREATE TABLE bases (
   id VARCHAR(36) PRIMARY KEY,
   user_id VARCHAR(36) NOT NULL,
   town_id VARCHAR(36) NOT NULL,
-  level INT NOT NULL DEFAULT 1,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -95,66 +92,49 @@ CREATE TABLE player_bases (
 );
 ```
 
-#### player_inventories テーブル
+#### warehouses テーブル
 
-プレイヤーの所持金と在庫容量を管理します。
+各拠点に紐づく倉庫の情報を管理します。
 
 ```sql
-CREATE TABLE player_inventories (
+CREATE TABLE warehouses (
   id VARCHAR(36) PRIMARY KEY,
-  user_id VARCHAR(36) NOT NULL,
-  gold INT NOT NULL DEFAULT 0,
-  max_capacity INT NOT NULL DEFAULT 100,
-  current_capacity INT NOT NULL DEFAULT 0,
+  base_id VARCHAR(36) NOT NULL,
+  level INT NOT NULL,
+  capacity INT NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  FOREIGN KEY (base_id) REFERENCES bases(id) ON DELETE CASCADE
 );
 ```
 
-#### player_ores テーブル
+#### warehouse_items テーブル
 
-プレイヤーが所持している鉱石の数量を管理します。
+倉庫に保管されているアイテムや鉱石の情報を管理します。
 
 ```sql
-CREATE TABLE player_ores (
+CREATE TABLE warehouse_items (
   id VARCHAR(36) PRIMARY KEY,
-  user_id VARCHAR(36) NOT NULL,
-  ore_id VARCHAR(36) NOT NULL,
-  quantity INT NOT NULL DEFAULT 0,
+  warehouse_id VARCHAR(36) NOT NULL,
+  item_id VARCHAR(36) NULL,
+  ore_id VARCHAR(36) NULL,
+  quantity INT NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (warehouse_id) REFERENCES warehouses(id) ON DELETE CASCADE,
+  FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
   FOREIGN KEY (ore_id) REFERENCES ores(id) ON DELETE CASCADE
-);
-```
-
-#### player_items テーブル
-
-プレイヤーが所持しているアイテムの数量を管理します。
-
-```sql
-CREATE TABLE player_items (
-  id VARCHAR(36) PRIMARY KEY,
-  user_id VARCHAR(36) NOT NULL,
-  item_id VARCHAR(36) NOT NULL,
-  quantity INT NOT NULL DEFAULT 0,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
 );
 ```
 
 ### リレーションシップ
 
-- ユーザー (1) -> (N) 拠点 (`player_bases`)
-- 町 (1) -> (N) 拠点 (`player_bases`)
-- ユーザー (1) -> (1) プレイヤーインベントリ (`player_inventories`)
-- ユーザー (1) -> (N) プレイヤー所持鉱石 (`player_ores`)
-- 鉱石 (1) -> (N) プレイヤー所持鉱石 (`player_ores`)
-- ユーザー (1) -> (N) プレイヤー所持アイテム (`player_items`)
-- アイテム (1) -> (N) プレイヤー所持アイテム (`player_items`)
+- ユーザー (1) -> (N) 拠点 (`bases`)
+- 町 (1) -> (N) 拠点 (`bases`)
+- 拠点 (1) -> (1) 倉庫 (`warehouses`)
+- 倉庫 (1) -> (N) 倉庫アイテム (`warehouse_items`)
+- アイテム (1) -> (N) 倉庫アイテム (`warehouse_items`)
+- 鉱石 (1) -> (N) 倉庫アイテム (`warehouse_items`)
 
 ## Redis データストア
 
@@ -188,7 +168,9 @@ Redis接続は以下の環境変数で設定します：
 
 ## データマイグレーション
 
-データベーススキーマの変更は、バックエンドの起動時に自動的に適用されます。実際の環境では適切なマイグレーションツールの導入を検討する必要があります。
+データベーススキーマの変更は `golang-migrate` を使用して管理されます。
+マイグレーションファイルは `database/migrations` ディレクトリに配置されています。
+バックエンドの起動時に、保留中のマイグレーションが自動的に適用されます。
 
 ## デモデータ
 

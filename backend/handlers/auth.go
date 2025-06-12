@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/base64"
 	"log"
 	"net/http"
@@ -20,6 +21,7 @@ import (
 )
 
 // ユーザーリポジトリ
+var db *sql.DB
 var userRepo *database.UserRepository
 
 // メール送信者
@@ -29,8 +31,9 @@ var mailSender mail.Sender
 var baseURL string
 
 // InitHandlersはハンドラの初期化を行います
-func InitHandlers() {
-	userRepo = database.NewUserRepository(database.DB)
+func InitHandlers(d *sql.DB) {
+	db = d
+	userRepo = database.NewUserRepository(d)
 	
 	// メール送信者を初期化
 	mailConfig := mail.DefaultConfig()
@@ -150,7 +153,7 @@ func Signup(c *gin.Context) {
 	}
 
 	// 0. データベース接続確認
-	if database.DB == nil {
+	if userRepo == nil {
 		log.Printf("データベース接続が確立されていません")
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "システムが現在メンテナンス中です。後ほど再試行してください。"})
 		return
@@ -198,6 +201,9 @@ func Signup(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "確認トークンの生成に失敗しました"})
 		return
 	}
+
+	// TODO: 開発用のログです。本番環境では削除してください。
+	log.Printf("ユーザー (%s) のための認証トークン: %s", req.Email, token)
 	
 	// 5. ユーザー情報をJSON化してRedisに保存
 	userJSON, err := pendingUser.ToJSON()

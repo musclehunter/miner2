@@ -60,17 +60,15 @@ func (r *UserRepository) CreateUser(user *models.User) error {
 // GetUserByEmail はメールアドレスからユーザーを検索します
 func (r *UserRepository) GetUserByEmail(email string) (*models.User, error) {
 	query := `
-		SELECT id, email, password_hash, salt, created_at, updated_at
+		SELECT id, name, email, password_hash, salt, created_at, updated_at
 		FROM users
 		WHERE email = ?
 	`
 
 	var user models.User
-	// nameフィールドはデータベースにはないがクライアント互換性のため空の値を設定
-	user.Name = ""
-
 	err := r.db.QueryRow(query, email).Scan(
 		&user.ID,
+		&user.Name,
 		&user.Email,
 		&user.PasswordHash,
 		&user.Salt,

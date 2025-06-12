@@ -116,15 +116,8 @@ export default {
       }, 200);
     };
     
-    // 認証状態を取得
-    const isAuthenticated = computed(() => {
-      // ローカルストレージからトークンとユーザー情報を取得
-      const token = localStorage.getItem('token');
-      const user = localStorage.getItem('user');
-      
-      // 両方が存在する場合のみ認証済みと判定
-      return !!token && !!user;
-    });
+    // ストアから認証状態を取得
+    const isAuthenticated = computed(() => store.getters.isAuthenticated);
     
     // 管理者認証状態を取得
     const isAdmin = computed(() => {
@@ -137,15 +130,7 @@ export default {
     
     // ログアウト処理
     const logout = () => {
-      // ローカルストレージからトークンとユーザー情報を削除
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      
-      // ストアの認証状態をリセット
-      store.commit('setUser', null);
-      store.commit('setToken', null);
-      
-      // タイトル画面に遷移
+      store.dispatch('logout');
       router.push('/');
     };
     

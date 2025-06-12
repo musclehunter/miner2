@@ -1,54 +1,46 @@
 package handlers
 
 import (
-	"database/sql"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/musclehunter/miner2/database"
+	"github.com/musclehunter/miner2/models"
 )
 
-var (
-	playerInventoryRepo *database.PlayerInventoryRepository
-	playerOreRepo       *database.PlayerOreRepository
-	playerItemRepo      *database.PlayerItemRepository
-)
 
-func InitInventoryHandlers(db *sql.DB) {
-	playerInventoryRepo = database.NewPlayerInventoryRepository(db)
-	playerOreRepo = database.NewPlayerOreRepository(db)
-	playerItemRepo = database.NewPlayerItemRepository(db)
-}
 
-// GetMyInventory はログイン中のユーザーの在庫情報を取得します
-func GetMyInventory(c *gin.Context) {
+// GetMyInventoryHandler retrieves the player's warehouse and its contents.
+// It replaces the old inventory system with the new warehouse-based one.
+func GetMyInventoryHandler(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "ユーザーが認証されていません"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
 		return
 	}
 
-	inventory, err := playerInventoryRepo.GetInventoryByUserID(userID.(string))
+
+
+	// Get the user's warehouse and the items within it
+	warehouse, items, err := database.GetWarehouseAndItemsByUserID(db, userID.(string))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "在庫情報の取得に失敗しました"})
+		log.Printf("Failed to get warehouse and items for user %s: %v", userID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve warehouse inventory"})
 		return
 	}
 
-	ores, err := playerOreRepo.GetOresByUserID(userID.(string))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "所持鉱石の取得に失敗しました"})
-		return
-	}
-
-	items, err := playerItemRepo.GetItemsByUserID(userID.(string))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "所持アイテムの取得に失敗しました"})
+	// If warehouse is nil, it means the user has no base yet.
+	if warehouse == nil {
+		c.JSON(http.StatusOK, gin.H{
+			"warehouse": nil,
+			"items":     []models.WarehouseItem{},
+		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"inventory": inventory,
-		"ores":      ores,
+		"warehouse": warehouse,
 		"items":     items,
 	})
 }

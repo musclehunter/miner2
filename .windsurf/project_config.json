@@ -14,7 +14,8 @@
         "github.com/golang-jwt/jwt/v4",
         "github.com/google/uuid",
         "golang.org/x/crypto/bcrypt",
-        "github.com/go-redis/redis/v8"
+        "github.com/go-redis/redis/v8",
+        "github.com/golang-migrate/migrate/v4"
       ]
     },
     "frontend": {
@@ -76,21 +77,17 @@
       "fields": ["ID", "Level", "Name", "Strength", "Stamina", "Agility", "Intelligence", "Luck"],
       "description": "労働者（キャラクター）の情報を管理"
     },
-    "PlayerInventory": {
-      "fields": ["ID", "UserID", "Gold", "MaxCapacity", "CurrentCapacity", "UpdatedAt"],
-      "description": "プレイヤーの所持金と在庫容量を管理"
+    "Base": {
+      "fields": ["ID", "UserID", "TownID", "CreatedAt", "UpdatedAt"],
+      "description": "プレイヤーの拠点情報を管理 (`bases`テーブル)"
     },
-    "PlayerOre": {
-      "fields": ["ID", "UserID", "OreID", "Quantity", "UpdatedAt"],
-      "description": "プレイヤーが所持する鉱石の数量を管理"
+    "Warehouse": {
+      "fields": ["ID", "BaseID", "Level", "Capacity", "CreatedAt", "UpdatedAt"],
+      "description": "拠点の倉庫情報を管理 (`warehouses`テーブル)"
     },
-    "PlayerItem": {
-      "fields": ["ID", "UserID", "ItemID", "Quantity", "UpdatedAt"],
-      "description": "プレイヤーが所持するアイテムの数量を管理"
-    },
-    "PlayerBase": {
-      "fields": ["ID", "UserID", "TownID", "Level", "CreatedAt", "UpdatedAt"],
-      "description": "プレイヤーの拠点情報を管理"
+    "WarehouseItem": {
+      "fields": ["ID", "WarehouseID", "ItemID", "Quantity", "CreatedAt", "UpdatedAt"],
+      "description": "倉庫に保管されているアイテムや鉱石を管理 (`warehouse_items`テーブル)"
     }
   },
   "api_endpoints": {
@@ -341,24 +338,22 @@
     "backend": [
       "/backend/simple_server.go",
       "/backend/models/user.go",
+      "/backend/models/base.go",
+      "/backend/models/warehouse.go",
       "/backend/models/town.go",
       "/backend/models/ore.go",
       "/backend/models/item.go",
       "/backend/models/pending_user.go",
-      "/backend/models/player_inventory.go",
-      "/backend/models/player_ore.go",
-      "/backend/models/player_item.go",
       "/backend/handlers/auth.go",
       "/backend/handlers/game.go",
       "/backend/handlers/admin.go",
+      "/backend/handlers/base_handler.go",
       "/backend/handlers/pending_users.go",
       "/backend/database/user_repository.go",
       "/backend/database/town_repository.go",
+      "/backend/database/base_repository.go",
       "/backend/database/ore_repository.go",
       "/backend/database/item_repository.go",
-      "/backend/database/player_inventory_repository.go",
-      "/backend/database/player_ore_repository.go",
-      "/backend/database/player_item_repository.go",
       "/backend/database/initial_data.go",
       "/backend/cache/redis.go",
       "/backend/mail/mail.go"

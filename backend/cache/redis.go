@@ -139,6 +139,17 @@ func NewRedisClient(host string, port int, password string) *RedisClientImpl {
 		Password: password,
 		DB:       0, // デフォルトのデータベース
 	})
+
+	// 接続を確認
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := client.Ping(ctx).Result()
+	if err != nil {
+		log.Fatalf("Redisへの接続に失敗しました: %v", err)
+	}
+
+	log.Println("RedisへのPingに成功しました")
 	
 	return &RedisClientImpl{
 		client: client,
